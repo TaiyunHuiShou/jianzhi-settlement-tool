@@ -158,6 +158,9 @@
       overflow: auto;
     }
     .split { display: grid; gap: 12px; }
+    .stack { display: grid; gap: 12px; }
+    .overview-agent-card { margin-top: 12px; }
+    .assign-split > .card { height: 100%; }
     .platform-price { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: end; }
     .platform-head { display: grid; gap: 4px; min-width: 150px; }
     .platform-head a { color: var(--blue); text-decoration: none; font-size: 12px; font-weight: 700; }
@@ -182,6 +185,9 @@
       .wrap { padding: 18px; }
       .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+      .overview-top { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: stretch; }
+      .overview-top > .card { min-height: 205px; }
+      .overview-side { display: grid; grid-template-rows: auto 1fr; }
       .form-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: end; }
       .tabs {
         position: sticky;
@@ -215,74 +221,84 @@
 
     <nav class="tabs" aria-label="页面导航">
       <button class="tab active" data-view="overview"><span>⌂</span>总览</button>
-      <button class="tab" data-view="accounts"><span>☷</span>账号</button>
-      <button class="tab" data-view="assign"><span>派</span>分配</button>
-      <button class="tab" data-view="import"><span>＋</span>回传</button>
-      <button class="tab" data-view="daily"><span>表</span>日报</button>
+      <button class="tab" data-view="accounts"><span>☷</span>入库/闲置</button>
+      <button class="tab" data-view="assign"><span>派</span>发号</button>
+      <button class="tab" data-view="import"><span>＋</span>回传结算</button>
+      <button class="tab" data-view="daily"><span>表</span>日结算</button>
       <button class="tab" data-view="settings"><span>⚙</span>设置</button>
     </nav>
 
     <main class="wrap">
       <section id="overview" class="view active">
         <div class="grid stats" id="stats"></div>
-        <div class="split" style="margin-top:12px">
+        <div class="split overview-top" style="margin-top:12px">
           <div class="card">
             <h2>平台汇总</h2>
             <div class="table-wrap"><table id="platformTable"></table></div>
           </div>
-        <div class="card">
-            <h2>库存概览</h2>
-            <div id="inventoryBox"></div>
+          <div class="stack overview-side">
+            <div class="card">
+              <h2>库存概览</h2>
+              <div id="inventoryBox"></div>
+            </div>
+            <div class="card">
+              <h2>回传未匹配账号</h2>
+              <div id="unmatchedBox"></div>
+            </div>
           </div>
-          <div class="card">
-            <h2>回传未匹配账号</h2>
-            <div id="unmatchedBox"></div>
+        </div>
+        <div class="card overview-agent-card" id="overviewAgentCard">
+          <h2>代理账号</h2>
+          <div class="toolbar">
+            <input id="agentGroupSearch" placeholder="搜索代理、账号或平台" style="max-width:320px">
           </div>
+          <div class="table-wrap"><table id="agentGroupTable"></table></div>
+          <h3>代理账号明细</h3>
+          <div class="table-wrap"><table id="agentAccountDetailTable"></table></div>
         </div>
       </section>
 
       <section id="accounts" class="view">
         <div class="card">
-          <h2>账号底册</h2>
-          <div class="notice">批量粘贴格式示例：<b>XXjt57-83 uR4KNDCnKHbF(橘子)</b>。括号里写微信备注，结算时就能知道钱给谁。</div>
-          <div class="split">
-            <div>
-              <textarea id="rosterText" placeholder="把账号密码和微信备注粘贴到这里，每行一个"></textarea>
-              <div class="toolbar" style="margin-top:10px">
-                <button id="importRosterBtn">批量导入/更新</button>
-                <button class="secondary" id="clearRosterTextBtn">清空输入</button>
-              </div>
+            <h2>账号入库</h2>
+            <div class="notice">这里只负责把上家给的新账号密码放进库存。重复导入不会清空已有归属；账号密码不做单个手动修改。</div>
+            <div class="toolbar" style="margin-bottom:10px">
+              <label style="margin:0">入库平台</label>
+              <select id="rosterPlatformInput">
+                <option value="">自动识别</option>
+                <option value="XX">全部按 XX 入库</option>
+                <option value="qq">全部按 qq 入库</option>
+                <option value="HH">全部按 HH 入库</option>
+                <option value="TN">全部按 TN 入库</option>
+              </select>
             </div>
-            <div>
-              <div class="form-grid">
-                <div><label>账号</label><input id="accountInput" placeholder="XXjt57-83"></div>
-                <div><label>密码</label><input id="passwordInput" placeholder="密码"></div>
-                <div><label>微信备注</label><input id="wechatInput" placeholder="橘子"></div>
-                <div><label>平台 <span id="platformAutoHint" class="small muted">自动识别</span></label><select id="platformInput"></select></div>
-              </div>
-              <div class="toolbar" style="margin-top:10px">
-                <button id="addAccountBtn">添加/更新账号</button>
-              </div>
+            <textarea id="rosterText" placeholder="每行一个账号和密码，例如：
+XXjt57-83 uR4KNDCnKHbF
+qqXX15-70 JcX9sCzCh9Bz
+Hqq27.2 zuDwhw38TEcM"></textarea>
+            <div class="toolbar" style="margin-top:10px">
+              <button id="importRosterBtn">导入到库存</button>
+              <button class="secondary" id="clearRosterTextBtn">清空输入</button>
             </div>
-          </div>
-          <div class="toolbar" style="margin-top:12px">
-            <input id="accountSearch" placeholder="搜索账号或微信" style="max-width:320px">
-            <button class="secondary" id="sampleAccountsBtn">填入示例账号</button>
-          </div>
-          <h3>按微信分组（四个平台一行）</h3>
+            <div id="rosterStatusBox" class="notice" style="display:none"></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h2>已派兼职账号</h2>
           <div class="toolbar">
+            <input id="workerGroupSearch" placeholder="搜索账号或微信" style="max-width:320px">
+          </div>
+          <div class="toolbar" style="margin-top:10px">
             <input id="renameFromInput" placeholder="原微信名，例如 Koumari" style="max-width:240px">
             <input id="renameToInput" placeholder="统一改成，例如 Koumori" style="max-width:240px">
             <button class="secondary" id="renameAssigneeBtn">合并/调整微信名</button>
           </div>
-          <div class="table-wrap" style="margin-bottom:12px"><table id="accountGroupTable"></table></div>
-          <h3>账号明细（库存/编辑）</h3>
-          <div class="table-wrap"><table id="accountsTable"></table></div>
+          <div class="table-wrap" style="margin-top:10px"><table id="workerGroupTable"></table></div>
         </div>
       </section>
 
       <section id="assign" class="view">
-        <div class="split">
+        <div class="split assign-split">
           <div class="card">
             <h2>给新兼职分配账号</h2>
             <div class="notice">输入微信号后，工具会从空闲库存里自动分配四个平台各 1 个账号。账号释放后 7 天内不会再分给新人。</div>
@@ -299,20 +315,17 @@
                 <button id="copyAssignmentBtn">复制发号文本</button>
               </div>
             </div>
-            <label style="margin-top:10px">当前空闲账号预览</label>
-            <div id="workerFreePreview" class="table-wrap"></div>
           </div>
 
           <div class="card">
-            <h2>代理拿号设置</h2>
-            <div class="notice">把账号先导入库存，再在这里选择账号分给代理。回传数据会按账号归属自动算到代理名下，代理单价可手动设置。</div>
+            <h2>代理拿号</h2>
+            <div class="notice">把上家直接发给代理的新账号粘贴到这里，入库时就归属到该代理；不会占用你的闲置账号库存。</div>
             <div class="form-grid">
               <div><label>代理名称</label><input id="agentNameInput" placeholder="例如：代理老王"></div>
               <div><label>代理单价</label><input id="agentRateInput" type="number" step="0.01" placeholder="例如：0.22"></div>
               <div><label>开始日期</label><input id="agentStartDate" type="date"></div>
-              <div><button id="assignAgentBtn">分给代理</button></div>
             </div>
-            <label style="margin-top:10px">直接粘贴给代理的新账号</label>
+            <label style="margin-top:10px">粘贴给代理的新账号</label>
             <textarea id="agentImportText" placeholder="一次可粘贴 10 个左右，例如：
 XXjt57-61 ARpJhR4z6bDR
 XXjt57-62 BdMv8X7K7NzE
@@ -327,20 +340,32 @@ TN-MHB-mb0-01075 vV6H4aVXyQ9V"></textarea>
                 <option value="HH">按 HH 入库</option>
                 <option value="TN">按 TN 入库</option>
               </select>
-              <button class="secondary" id="importAgentAccountsBtn">入库并分给代理</button>
+              <button class="secondary" id="importAgentAccountsBtn">归属到代理</button>
             </div>
-            <label style="margin-top:10px">选择空闲账号</label>
-            <div class="toolbar">
-              <button class="secondary" id="selectAllAgentAccountsBtn">全选空闲账号</button>
-              <button class="secondary" id="clearAgentAccountsBtn">取消选择</button>
-            </div>
-            <div id="agentAccountChoices" class="table-wrap"></div>
           </div>
         </div>
 
         <div class="card" style="margin-top:12px">
+          <h2>派发限制</h2>
+          <div class="notice">这里看发号前后的库存变化。派完一组后，“可派发库存”会少一组；有订单记录回收后会进入 7 天限制。</div>
+          <div id="assignInventoryBox" style="margin-bottom:10px"></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h2>闲置账号</h2>
+          <div class="notice">这里是当前可派发库存，只展示和复制账号密码；已分配、7 天限制、代理账号不会放在这里。</div>
+          <div class="toolbar" style="margin-top:12px">
+            <input id="accountSearch" placeholder="搜索闲置账号或平台" style="max-width:320px">
+          </div>
+          <div class="table-wrap"><table id="accountsTable"></table></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
           <h2>当前分配和回收</h2>
-          <div class="notice">兼职不做或代理退号时，点“释放/回收”。释放后账号进入 7 天隔离期，过期后自动回到空闲库存。</div>
+          <div class="notice">按错人时点“撤销误分”，账号立即恢复；对方退号时点“退号回收”，没有订单会立即释放，有订单记录才进入 7 天隔离。</div>
+          <div class="toolbar" style="margin-top:12px">
+            <input id="assignmentSearch" placeholder="搜索兼职、账号或平台" style="max-width:320px">
+          </div>
           <div class="table-wrap"><table id="assignmentsTable"></table></div>
         </div>
       </section>
@@ -360,7 +385,9 @@ TN-MHB-mb0-01046
 1
 33
 右边失败数不用管，工具会按账号顺序取第一批数字。"></textarea>
-          <div class="toolbar" style="margin-top:10px">
+            <div class="toolbar" style="margin-top:10px">
+            <input id="returnFileInput" type="file" accept=".xlsx,.xls,.csv,.txt">
+            <button class="secondary" id="loadReturnFileBtn">上传Excel/WPS表格</button>
             <button id="parseReturnBtn">解析并保存到当天</button>
             <button class="secondary" id="sampleReturnBtn">填入示例回传</button>
             <button class="secondary" id="clearReturnTextBtn">清空输入框</button>
@@ -375,9 +402,6 @@ TN-MHB-mb0-01046
         <div class="split">
           <div class="card">
             <h2>兼职结算</h2>
-            <div class="toolbar">
-              <button id="copyWorkerBtn">复制发给兼职的明细</button>
-            </div>
             <div class="table-wrap"><table id="wechatTable"></table></div>
           </div>
           <div class="card">
@@ -386,8 +410,16 @@ TN-MHB-mb0-01046
               <button class="secondary" id="copyAgentBtn">复制代理结算</button>
             </div>
             <div class="table-wrap" style="margin-bottom:12px"><table id="agentTable"></table></div>
-            <div id="copyText" class="copybox"></div>
+            <h3>代理当天做单账号</h3>
+            <div class="table-wrap"><table id="agentAccountDailyTable"></table></div>
           </div>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <h2>兼职单人总结算</h2>
+          <div class="toolbar">
+            <button id="copyWorkerBtn">复制发给兼职的明细</button>
+          </div>
+          <div id="workerCopyText" class="copybox"></div>
         </div>
       </section>
 
@@ -400,13 +432,29 @@ TN-MHB-mb0-01046
               <button id="savePricesBtn">保存价格</button>
               <button class="secondary" id="resetPricesBtn">恢复默认价格</button>
             </div>
+            <h3>单人价格</h3>
+            <div class="notice">名字必须完全一致才会生效；“杨”和“杨桃李洲”会按两个人分别计算。</div>
+            <div class="form-grid">
+              <div><label>类型</label><select id="rateOwnerTypeInput"><option value="worker">兼职</option><option value="agent">代理</option></select></div>
+              <div><label>微信/代理名</label><input id="rateOwnerNameInput" placeholder="必须完整输入，例如：杨桃李洲"></div>
+              <div><label>平台</label><select id="ratePlatformInput"><option value="XX">XX</option><option value="qq">qq</option><option value="HH">HH</option><option value="TN">TN</option></select></div>
+              <div><label>单价</label><input id="rateValueInput" type="number" step="0.01" placeholder="例如：0.8"></div>
+            </div>
+            <div class="toolbar" style="margin-top:10px">
+              <button class="secondary" id="saveOwnerRateBtn">保存单人价格</button>
+              <button class="ghost" id="clearOwnerRateBtn">清除这个单人价格</button>
+            </div>
+            <div class="table-wrap" style="margin-top:10px"><table id="ownerRateTable"></table></div>
           </div>
           <div class="card">
             <h2>备份与恢复</h2>
             <div class="toolbar">
               <button id="exportBtn">导出备份</button>
               <button class="secondary" id="importBackupBtn">导入备份</button>
+              <button class="secondary" id="scanStorageBtn">扫描本页旧数据</button>
             </div>
+            <div id="dataStatusBox" class="notice"></div>
+            <div id="storageScanBox"></div>
             <textarea id="backupText" placeholder="导出的备份会显示在这里；也可以把备份 JSON 粘贴进来再点导入"></textarea>
             <div class="notice" style="margin-top:12px">这个工具的数据存在当前浏览器里。换手机、清缓存、换浏览器前，先导出备份。</div>
           </div>
@@ -434,8 +482,26 @@ TN-MHB-mb0-01046
         </div>
       </section>
     </main>
+
+    <div id="editAccountPanel" class="card" style="display:none; position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:20; width:min(560px,92vw); box-shadow:0 20px 60px rgba(15,23,42,.25)">
+      <h2>编辑账号</h2>
+      <input id="editAccountOriginal" type="hidden">
+      <div class="form-grid">
+        <div><label>账号</label><input id="editAccountInput" disabled></div>
+        <div><label>密码</label><input id="editPasswordInput"></div>
+        <div><label>归属/备注</label><input id="editWechatInput" placeholder="兼职名，代理写：代理：名字"></div>
+        <div><label>平台</label><select id="editPlatformInput"><option value="XX">XX</option><option value="qq">qq</option><option value="HH">HH</option><option value="TN">TN</option></select></div>
+      </div>
+      <div class="toolbar" style="margin-top:12px">
+        <button id="saveAccountEditBtn">保存账号</button>
+        <button class="danger" id="deleteAccountEditBtn">删除测试号</button>
+        <button class="secondary" id="closeAccountEditBtn">关闭</button>
+      </div>
+      <div id="editAccountStatusBox" class="notice" style="display:none"></div>
+    </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script>
 (function (root) {
   const DEFAULT_PLATFORMS = {
@@ -493,6 +559,7 @@ TN-MHB-mb0-01046
       accounts: [],
       assignments: [],
       agents: [],
+      rateOverrides: { worker: {}, agent: {} },
       days: {},
     };
   }
@@ -621,6 +688,60 @@ TN-MHB-mb0-01046
       wechat: account.wechat || '',
       platform,
     };
+  }
+
+  function parseOwnerInput(value, fallbackType = 'worker') {
+    const text = String(value || '').trim();
+    const match = text.match(/^代理[：:\-\s]*(.+)$/);
+    if (match && match[1].trim()) return { type: 'agent', name: match[1].trim() };
+    return { type: fallbackType === 'agent' ? 'agent' : 'worker', name: text };
+  }
+
+  function normalizeRateOverrides(rateOverrides) {
+    const normalized = { worker: {}, agent: {} };
+    ['worker', 'agent'].forEach((type) => {
+      const source = rateOverrides && rateOverrides[type] && typeof rateOverrides[type] === 'object' ? rateOverrides[type] : {};
+      Object.entries(source).forEach(([name, rates]) => {
+        const cleanName = String(name || '').trim();
+        if (!cleanName || !rates || typeof rates !== 'object') return;
+        normalized[type][cleanName] = {};
+        PLATFORM_ORDER.forEach((platform) => {
+          if (rates[platform] !== undefined && rates[platform] !== '') {
+            normalized[type][cleanName][platform] = Number(rates[platform]) || 0;
+          }
+        });
+      });
+    });
+    return normalized;
+  }
+
+  function setAssigneeRate(state, { type = 'worker', name, platform, rate }) {
+    const ownerType = type === 'agent' ? 'agent' : 'worker';
+    const ownerName = String(name || '').trim();
+    if (!ownerName) return false;
+    if (!PLATFORM_ORDER.includes(platform)) return false;
+    state.rateOverrides = normalizeRateOverrides(state.rateOverrides);
+    if (!state.rateOverrides[ownerType][ownerName]) state.rateOverrides[ownerType][ownerName] = {};
+    if (rate === '' || rate === null || rate === undefined) {
+      delete state.rateOverrides[ownerType][ownerName][platform];
+      if (!Object.keys(state.rateOverrides[ownerType][ownerName]).length) delete state.rateOverrides[ownerType][ownerName];
+      return true;
+    }
+    state.rateOverrides[ownerType][ownerName][platform] = Number(rate) || 0;
+    return true;
+  }
+
+  function rateForOwner({ type, name, platform, platforms, rateOverrides, fallbackRate }) {
+    const ownerType = type === 'agent' ? 'agent' : 'worker';
+    const ownerName = String(name || '').trim();
+    const overrides = normalizeRateOverrides(rateOverrides);
+    if (ownerName && overrides[ownerType] && overrides[ownerType][ownerName] && overrides[ownerType][ownerName][platform] !== undefined) {
+      return Number(overrides[ownerType][ownerName][platform]) || 0;
+    }
+    const config = normalizePlatformConfig(platforms);
+    const rates = config[platform] || { workerRate: 0 };
+    if (fallbackRate !== null && fallbackRate !== undefined && fallbackRate !== '') return Number(fallbackRate) || 0;
+    return Number(rates.workerRate) || 0;
   }
 
   function findAssignment(assignments, account, date) {
@@ -758,15 +879,48 @@ TN-MHB-mb0-01046
     return { assigned, skipped };
   }
 
+  function mergeAccount(existing, incoming) {
+    const current = existing || {};
+    return {
+      account: incoming.account || current.account,
+      password: incoming.password || current.password || '',
+      wechat: incoming.wechat || current.wechat || '',
+      platform: incoming.platform || current.platform || detectPlatform(incoming.account || current.account),
+    };
+  }
+
   function upsertAccounts(state, accounts) {
     state.accounts = Array.isArray(state.accounts) ? state.accounts : [];
     const map = new Map(state.accounts.map((item) => [item.account, normalizeAccount(item)]));
     accounts.map(normalizeAccount).forEach((item) => {
       if (!item.account) return;
-      map.set(item.account, { ...map.get(item.account), ...item });
+      map.set(item.account, mergeAccount(map.get(item.account), item));
     });
     state.accounts = [...map.values()].sort((a, b) => a.account.localeCompare(b.account));
     return state.accounts;
+  }
+
+  function updateAccount(state, { account, password, wechat, platform }) {
+    const target = String(account || '').trim();
+    if (!target) return null;
+    state.accounts = Array.isArray(state.accounts) ? state.accounts : [];
+    const item = state.accounts.find((row) => row.account === target);
+    if (!item) return null;
+    if (password !== undefined) item.password = String(password || '').trim();
+    if (wechat !== undefined) item.wechat = String(wechat || '').trim();
+    if (platform !== undefined && PLATFORM_ORDER.includes(platform)) item.platform = platform;
+    if (!item.platform) item.platform = detectPlatform(item.account);
+    if (wechat !== undefined) {
+      const active = activeAssignment(state.assignments, target);
+      if (active) {
+        const owner = parseOwnerInput(wechat, active.assigneeType);
+        if (owner.name) {
+          active.assignee = owner.name;
+          active.assigneeType = owner.type;
+        }
+      }
+    }
+    return normalizeAccount(item);
   }
 
   function importAccountsForAgent(state, { agent, rate, startDate = today(), text = '', platform = '' }) {
@@ -774,7 +928,7 @@ TN-MHB-mb0-01046
     const imported = parseAccountRoster(text).map((item) => ({
       ...item,
       wechat: '',
-      platform: item.platform || fallbackPlatform,
+      platform: fallbackPlatform || item.platform,
     }));
     upsertAccounts(state, imported);
     const result = assignAccountsToAgent(state, {
@@ -844,8 +998,34 @@ TN-MHB-mb0-01046
   function releaseAssignment(state, account, endDate = today()) {
     const active = activeAssignment(state.assignments, account);
     if (!active) return null;
+    if (!hasReturnForAccount(state, account)) {
+      state.assignments = (state.assignments || []).filter((item) => item.id !== active.id);
+      return { ...active, immediate: true };
+    }
     active.endDate = endDate;
+    return { ...active, immediate: false };
+  }
+
+  function revokeActiveAssignment(state, account) {
+    const active = activeAssignment(state.assignments, account);
+    if (!active) return null;
+    state.assignments = (state.assignments || []).filter((item) => item.id !== active.id);
     return active;
+  }
+
+  function hasReturnForAccount(state, account) {
+    return Object.values(state.days || {}).some((day) => (day.returns || []).some((row) => row.account === account && Number(row.count) > 0));
+  }
+
+  function deleteAccountSafely(state, account) {
+    const hasAccount = (state.accounts || []).some((row) => row.account === account);
+    if (!hasAccount) return { deleted: false, reason: '账号不存在' };
+    if (hasReturnForAccount(state, account)) {
+      return { deleted: false, reason: '这个账号已有回传单数，不能删除，避免结算记录断掉。' };
+    }
+    state.assignments = (state.assignments || []).filter((item) => item.account !== account);
+    state.accounts = state.accounts.filter((item) => item.account !== account);
+    return { deleted: true, reason: '' };
   }
 
   function formatAssignmentText(accounts, platforms = DEFAULT_PLATFORMS) {
@@ -865,7 +1045,7 @@ TN-MHB-mb0-01046
       .join('\n');
   }
 
-  function calculateSettlement({ accounts = [], assignments = [], date = today(), returns = [], platforms = DEFAULT_PLATFORMS }) {
+  function calculateSettlement({ accounts = [], assignments = [], date = today(), returns = [], platforms = DEFAULT_PLATFORMS, rateOverrides = {} }) {
     const config = normalizePlatformConfig(platforms);
     const accountMap = new Map();
     accounts.map(normalizeAccount).forEach((item) => {
@@ -892,7 +1072,14 @@ TN-MHB-mb0-01046
       const count = Number(returned.count) || 0;
       const assigneeType = assignment ? assignment.assigneeType : 'worker';
       const assignee = assignment ? assignment.assignee : (base.wechat || (accountMap.has(account) ? '未备注' : '未匹配'));
-      const workerRate = assignment && assignment.rate !== null && assignment.rate !== undefined ? Number(assignment.rate) : rates.workerRate;
+      const workerRate = rateForOwner({
+        type: assigneeType,
+        name: assignee,
+        platform,
+        platforms: config,
+        rateOverrides,
+        fallbackRate: assignment && assignment.rate !== null && assignment.rate !== undefined ? assignment.rate : null,
+      });
       const payable = money(count * workerRate);
       const receivable = money(count * rates.bossRate);
       return {
@@ -942,7 +1129,8 @@ TN-MHB-mb0-01046
   }
 
   function addAssigneePlatformSummary(map, row) {
-    const key = row.wechat || '未备注';
+    const name = row.wechat || '未备注';
+    const key = `${row.assigneeType || 'worker'}:${name}`;
     if (!map.has(key)) {
       const platforms = {};
       PLATFORM_ORDER.forEach((platform) => {
@@ -957,7 +1145,7 @@ TN-MHB-mb0-01046
       });
       map.set(key, {
         key,
-        wechat: key,
+        wechat: name,
         assigneeType: row.assigneeType,
         count: 0,
         payable: 0,
@@ -1214,6 +1402,11 @@ TN-MHB-mb0-01046
     const text = String(input || '').trim();
     if (!text) throw new Error('empty backup');
 
+    const fullBackup = extractFullBackup(text);
+    if (fullBackup) {
+      return { state: restoreState(fullBackup), mode: 'full', count: 0 };
+    }
+
     try {
       const parsed = JSON.parse(text);
       if (Array.isArray(parsed)) {
@@ -1232,6 +1425,82 @@ TN-MHB-mb0-01046
     }
   }
 
+  function extractFullBackup(text) {
+    const value = String(text || '').trim();
+    const candidates = [];
+
+    try {
+      const parsed = JSON.parse(value);
+      if (typeof parsed === 'string') candidates.push(parsed);
+      if (isFullBackupObject(parsed)) return parsed;
+    } catch (error) {
+      // Try looser extraction below.
+    }
+
+    const quoted = value.match(/setItem\s*\(\s*["']settlement-tool-state-v\d+["']\s*,\s*(['"])([\s\S]*?)\1\s*\)/);
+    if (quoted) {
+      try {
+        candidates.push(JSON.parse(quoted[1] + quoted[2] + quoted[1]));
+      } catch (error) {
+        candidates.push(quoted[2]);
+      }
+    }
+
+    const first = value.indexOf('{');
+    const last = value.lastIndexOf('}');
+    if (first >= 0 && last > first) candidates.push(value.slice(first, last + 1));
+
+    for (const candidate of candidates) {
+      try {
+        const parsed = typeof candidate === 'string' ? JSON.parse(candidate) : candidate;
+        if (typeof parsed === 'string') {
+          const nested = JSON.parse(parsed);
+          if (isFullBackupObject(nested)) return nested;
+        }
+        if (isFullBackupObject(parsed)) return parsed;
+      } catch (error) {
+        // Continue with the next candidate.
+      }
+    }
+    return null;
+  }
+
+  function isFullBackupObject(value) {
+    return Boolean(value && typeof value === 'object' && (
+      Array.isArray(value.accounts) ||
+      Array.isArray(value.assignments) ||
+      value.days ||
+      value.platforms
+    ));
+  }
+
+  function scanStoredBackups(storage) {
+    if (!storage || typeof storage.length !== 'number') return [];
+    const rows = [];
+    for (let index = 0; index < storage.length; index += 1) {
+      const key = storage.key(index);
+      if (!key) continue;
+      const raw = storage.getItem(key);
+      let parsed = null;
+      try {
+        parsed = extractFullBackup(raw) || JSON.parse(raw);
+      } catch (error) {
+        parsed = null;
+      }
+      if (!isFullBackupObject(parsed)) continue;
+      const state = restoreState(parsed);
+      rows.push({
+        key,
+        accounts: state.accounts.length,
+        assignments: state.assignments.length,
+        agents: state.agents.length,
+        days: Object.keys(state.days || {}).length,
+        raw,
+      });
+    }
+    return rows.sort((a, b) => b.accounts - a.accounts || b.assignments - a.assignments || a.key.localeCompare(b.key));
+  }
+
   function restoreState(json) {
     const parsed = typeof json === 'string' ? JSON.parse(json) : json;
     const defaults = createDefaultState();
@@ -1243,6 +1512,7 @@ TN-MHB-mb0-01046
       accounts: Array.isArray(parsed.accounts) ? parsed.accounts.map(normalizeAccount) : [],
       assignments: Array.isArray(parsed.assignments) ? parsed.assignments : [],
       agents: Array.isArray(parsed.agents) ? parsed.agents : [],
+      rateOverrides: normalizeRateOverrides(parsed.rateOverrides),
       days: parsed.days && typeof parsed.days === 'object' ? parsed.days : {},
     };
   }
@@ -1278,10 +1548,14 @@ TN-MHB-mb0-01046
     accountOwnerLabel,
     inventorySummary,
     renameAssignee,
+    setAssigneeRate,
     assignAccountsToWorker,
     assignAccountsToAgent,
     importAccountsForAgent,
     releaseAssignment,
+    revokeActiveAssignment,
+    deleteAccountSafely,
+    updateAccount,
     formatAssignmentText,
     serializeState,
     encryptCloudPayload,
@@ -1290,6 +1564,7 @@ TN-MHB-mb0-01046
     cloudFriendlyError,
     cloudTableSql,
     importBackupState,
+    scanStoredBackups,
     restoreState,
     saveState,
     loadState,
@@ -1326,6 +1601,7 @@ TN-MHB-mb0-01046
         date: state.selectedDate,
         returns: currentReturns(),
         platforms: state.platforms,
+        rateOverrides: state.rateOverrides,
       });
     }
 
@@ -1335,14 +1611,20 @@ TN-MHB-mb0-01046
       renderStats();
       renderPlatformTable();
       renderInventory();
+      renderAssignInventory();
       renderUnmatched();
       renderAccounts();
+      renderOwnerGroups();
+      renderAgentAccountDetails();
       renderAssignmentPanel();
       renderReturns();
       renderWechat();
+      renderAgentAccountDaily();
       renderCopyText();
       renderPriceSettings();
+      renderOwnerRates();
       renderCloudSettings();
+      renderDataStatus();
     }
 
     function yuan(value) {
@@ -1396,7 +1678,29 @@ TN-MHB-mb0-01046
       return `<div class="account-card">
         <div class="account-line"><strong>${account}</strong><button class="mini-copy" data-copy-value="${account}">复制账号</button></div>
         <div class="account-line"><span class="small muted">${password || '无密码'}</span>${password ? `<button class="mini-copy" data-copy-value="${password}">复制密码</button>` : ''}</div>
+        <div class="account-line"><button class="mini-copy" data-edit-account="${account}">编辑</button></div>
       </div>`;
+    }
+
+    function idleAccountCard(row) {
+      if (!row || !row.account) return '-';
+      const account = escapeHtml(row.account);
+      const password = escapeHtml(row.password || '');
+      return `<div class="account-card">
+        <div class="account-line"><strong>${account}</strong><button class="mini-copy" data-copy-value="${account}">复制账号</button></div>
+        <div class="account-line"><span class="small muted">${password || '无密码'}</span>${password ? `<button class="mini-copy" data-copy-value="${password}">复制密码</button>` : ''}</div>
+        <div class="account-line"><button class="mini-copy" data-edit-account="${account}">编辑</button></div>
+      </div>`;
+    }
+
+    function selectableAccountCard(row) {
+      if (!row || !row.account) return '-';
+      const account = escapeHtml(row.account);
+      const password = escapeHtml(row.password || '');
+      return `<label class="account-card">
+        <div class="account-line"><input type="checkbox" data-agent-account="${account}"><strong>${account}</strong></div>
+        <div class="account-line"><span class="small muted">${password || '无密码'}</span></div>
+      </label>`;
     }
 
     function renderPlatformTable() {
@@ -1441,12 +1745,36 @@ TN-MHB-mb0-01046
       `;
     }
 
+    function renderAssignInventory() {
+      const summary = T.inventorySummary(state, state.selectedDate);
+      const workerGroups = ownerGroupDisplayRows('worker').length;
+      const agentGroups = ownerGroupDisplayRows('agent').length;
+      if (!$('assignInventoryBox')) return;
+      $('assignInventoryBox').innerHTML = `
+        <div class="grid stats">
+          <div class="stat-title">可派发库存<br><b class="stat-value">${summary.freeSets}</b><br><span class="small muted">组 / ${summary.freeAccounts}个号</span></div>
+          <div class="stat-title">已派出<br><b class="stat-value">${summary.assignedSets}</b><br><span class="small muted">组 / ${summary.assignedAccounts}个号</span></div>
+          <div class="stat-title">兼职已派<br><b class="stat-value">${workerGroups}</b><br><span class="small muted">组</span></div>
+          <div class="stat-title">代理已派<br><b class="stat-value">${agentGroups}</b><br><span class="small muted">组</span></div>
+          <div class="stat-title">7天限制<br><b class="stat-value">${summary.cooldownSets}</b><br><span class="small muted">组 / ${summary.cooldownAccounts}个号</span></div>
+          <div class="stat-title">总账号<br><b class="stat-value">${summary.totalAccounts}</b><br><span class="small muted">四个平台合计</span></div>
+        </div>
+      `;
+    }
+
     function renderPlatformSelect() {
+      if (!$('platformInput')) return;
       const html = Object.keys(state.platforms).map((key) => `<option value="${key}">${key}</option>`).join('');
       $('platformInput').innerHTML = html;
     }
 
+    function applyImportPlatform(rows, platform) {
+      if (!platform) return rows;
+      return rows.map((row) => ({ ...row, platform }));
+    }
+
     function syncManualAccountPlatform() {
+      if (!$('accountInput') || !$('platformInput')) return;
       const account = $('accountInput').value.trim();
       const platform = T.detectPlatform(account);
       if (platform && state.platforms[platform]) {
@@ -1461,90 +1789,147 @@ TN-MHB-mb0-01046
 
     function renderAccounts() {
       const keyword = $('accountSearch').value.trim().toLowerCase();
-      const rows = state.accounts
-        .map((row) => {
-          const status = T.accountStatus(state, row.account, state.selectedDate);
-          const owner = T.accountOwnerLabel(state, row.account, state.selectedDate);
-          const statusText = status.status === 'assigned'
-            ? `已分给${status.assignment.assigneeType === 'agent' ? '代理' : '兼职'}：${status.assignment.assignee}`
-            : status.status === 'manual'
-              ? `已备注给兼职：${status.assignee}`
-            : status.status === 'cooldown'
-              ? `冷却中，可用日期 ${status.availableDate}`
-              : '空闲';
-          if (keyword && ![
-            row.account,
-            row.password,
-            row.wechat,
-            owner,
-            row.platform || T.detectPlatform(row.account),
-            statusText,
-          ].some((value) => String(value || '').toLowerCase().includes(keyword))) return '';
-          return `<tr>
-          <td>${row.account}</td>
-          <td>${row.password || ''}</td>
-          <td>${owner || ''}</td>
-          <td><span class="badge">${row.platform || T.detectPlatform(row.account) || '未知'}</span></td>
-          <td>${statusText}</td>
-          <td><button class="secondary" data-edit="${row.account}">编辑</button> <button class="danger" data-delete="${row.account}">删除</button></td>
-        </tr>`;
-        })
-        .filter(Boolean);
-      $('accountsTable').innerHTML = table(['账号', '密码', '归属/备注', '平台', '状态', '操作'], rows, '还没有账号，先批量导入或手动添加');
-      renderAccountGroups(keyword);
+      const byPlatform = { XX: [], qq: [], HH: [], TN: [] };
+      T.availableAccounts(state, state.selectedDate)
+        .filter((row) => !keyword || [
+          row.account,
+          row.password,
+          row.platform,
+        ].some((value) => String(value || '').toLowerCase().includes(keyword)))
+        .forEach((row) => {
+          if (byPlatform[row.platform]) byPlatform[row.platform].push(row);
+        });
+      const maxRows = Math.max(0, ...Object.values(byPlatform).map((rows) => rows.length));
+      const rows = Array.from({ length: maxRows }).map((_, index) => `<tr>
+        <td>${idleAccountCard(byPlatform.XX[index])}</td>
+        <td>${idleAccountCard(byPlatform.qq[index])}</td>
+        <td>${idleAccountCard(byPlatform.HH[index])}</td>
+        <td>${idleAccountCard(byPlatform.TN[index])}</td>
+      </tr>`);
+      $('accountsTable').innerHTML = table([platformHeader('XX'), platformHeader('qq'), platformHeader('HH'), platformHeader('TN')], rows, '当前没有闲置账号');
     }
 
-    function renderAccountGroups(keyword = '') {
-      const groupMap = new Map();
-      state.accounts.forEach((row) => {
+    function ownerKindFromRemark(value) {
+      const text = String(value || '').trim();
+      if (!text) return { type: '', owner: '' };
+      const match = text.match(/^代理[：:\-\s]*(.+)$/);
+      if (match && match[1].trim()) return { type: 'agent', owner: match[1].trim() };
+      if ((state.agents || []).some((agent) => agent && agent.name === text)) {
+        return { type: 'agent', owner: text };
+      }
+      return { type: 'worker', owner: text };
+    }
+
+    function ownerGroupBuckets(type, keyword = '') {
+      const buckets = new Map();
+      const needle = String(keyword || '').trim().toLowerCase();
+      state.accounts.map((row) => ({
+        ...row,
+        platform: row.platform || T.detectPlatform(row.account),
+      })).forEach((row) => {
         const status = T.accountStatus(state, row.account, state.selectedDate);
-        const owner = status.status === 'assigned'
-          ? `${status.assignment.assigneeType === 'agent' ? '代理：' : ''}${status.assignment.assignee}`
-          : status.status === 'manual'
-            ? status.assignee
-            : '';
+        let owner = '';
+        if (status.status === 'assigned' && status.assignment.assigneeType === type) {
+          owner = status.assignment.assignee;
+        } else if (status.status === 'manual') {
+          const manual = ownerKindFromRemark(status.assignee);
+          if (manual.type === type) owner = manual.owner;
+        }
         if (!owner) return;
-        if (keyword && !row.account.toLowerCase().includes(keyword) && !owner.toLowerCase().includes(keyword)) return;
-        if (!groupMap.has(owner)) groupMap.set(owner, { wechat: owner, XX: null, qq: null, HH: null, TN: null });
-        const group = groupMap.get(owner);
-        const platform = row.platform || T.detectPlatform(row.account);
-        if (group[platform] !== undefined) group[platform] = row;
+        if (needle && ![
+          row.account,
+          row.password,
+          owner,
+          row.platform,
+        ].some((value) => String(value || '').toLowerCase().includes(needle))) return;
+        if (!buckets.has(owner)) {
+          buckets.set(owner, { owner, XX: [], qq: [], HH: [], TN: [] });
+        }
+        const group = buckets.get(owner);
+        if (Object.prototype.hasOwnProperty.call(group, row.platform)) group[row.platform].push(row);
       });
-      const rows = [...groupMap.values()].sort((a, b) => a.wechat.localeCompare(b.wechat)).map((row) => `<tr>
-        <td>${escapeHtml(row.wechat)}</td>
+      return [...buckets.values()].sort((a, b) => a.owner.localeCompare(b.owner, 'zh-Hans-CN'));
+    }
+
+    function ownerGroupDisplayRows(type, keyword = '') {
+      return ownerGroupBuckets(type, keyword).flatMap((group) => {
+        const rowCount = Math.max(1, ...T.PLATFORM_ORDER.map((platform) => group[platform].length));
+        return Array.from({ length: rowCount }).map((_, index) => ({
+          owner: index === 0 ? group.owner : '',
+          XX: group.XX[index] || null,
+          qq: group.qq[index] || null,
+          HH: group.HH[index] || null,
+          TN: group.TN[index] || null,
+        }));
+      });
+    }
+
+    function renderOwnerGroups() {
+      const workerRows = ownerGroupDisplayRows('worker', $('workerGroupSearch').value).map((row) => `<tr>
+        <td>${escapeHtml(row.owner)}</td>
         <td>${accountCard(row.XX)}</td>
         <td>${accountCard(row.qq)}</td>
         <td>${accountCard(row.HH)}</td>
         <td>${accountCard(row.TN)}</td>
       </tr>`);
-      $('accountGroupTable').innerHTML = table(['微信', platformHeader('XX'), platformHeader('qq'), platformHeader('HH'), platformHeader('TN')], rows, '还没有带微信备注的账号');
+      $('workerGroupTable').innerHTML = table(['微信', platformHeader('XX'), platformHeader('qq'), platformHeader('HH'), platformHeader('TN')], workerRows, '还没有派给兼职的账号');
+
+      const agentRows = ownerGroupDisplayRows('agent', $('agentGroupSearch').value).map((row) => `<tr>
+        <td>${escapeHtml(row.owner)}</td>
+        <td>${accountCard(row.XX)}</td>
+        <td>${accountCard(row.qq)}</td>
+        <td>${accountCard(row.HH)}</td>
+        <td>${accountCard(row.TN)}</td>
+      </tr>`);
+      $('agentGroupTable').innerHTML = table(['代理', platformHeader('XX'), platformHeader('qq'), platformHeader('HH'), platformHeader('TN')], agentRows, '还没有代理账号');
     }
 
-    function renderAssignmentPanel() {
-      $('assignStartDate').value = state.selectedDate;
-      $('agentStartDate').value = state.selectedDate;
-      const freeAccounts = T.availableAccounts(state, state.selectedDate);
-      const previewRows = freeAccounts.slice(0, 40).map((row) => `<tr>
-        <td><span class="badge">${row.platform || '未知'}</span></td>
-        <td>${row.account}</td>
-        <td>${row.password || ''}</td>
-      </tr>`);
-      $('workerFreePreview').innerHTML = `<table>${table(['平台', '账号', '密码'], previewRows, '当前没有空闲账号')}</table>`;
-      const freeRows = freeAccounts.map((row) => `<tr>
-        <td><input type="checkbox" data-agent-account="${row.account}"></td>
-        <td><span class="badge">${row.platform || '未知'}</span></td>
-        <td>${row.account}</td>
-        <td>${row.password || ''}</td>
-      </tr>`);
-      $('agentAccountChoices').innerHTML = `<table>${table(['选', '平台', '账号', '密码'], freeRows, '当前没有空闲账号可分给代理')}</table>`;
+    function renderAgentAccountDetails() {
+      const keyword = $('agentGroupSearch').value.trim().toLowerCase();
+      const rows = state.accounts
+        .map((row) => ({ ...row, platform: row.platform || T.detectPlatform(row.account) }))
+        .map((row) => {
+          const status = T.accountStatus(state, row.account, state.selectedDate);
+          let owner = '';
+          let statusText = '';
+          if (status.status === 'assigned' && status.assignment.assigneeType === 'agent') {
+            owner = status.assignment.assignee;
+            statusText = '已分给代理';
+          } else if (status.status === 'manual') {
+            const manual = ownerKindFromRemark(status.assignee);
+            if (manual.type === 'agent') {
+              owner = manual.owner;
+              statusText = '备注给代理';
+            }
+          }
+          if (!owner) return null;
+          if (keyword && ![row.account, row.password, owner, row.platform].some((value) => String(value || '').toLowerCase().includes(keyword))) return null;
+          return `<tr>
+            <td>${escapeHtml(row.account)}</td>
+            <td>${escapeHtml(row.password || '')}</td>
+            <td>${escapeHtml(owner)}</td>
+            <td><span class="badge">${escapeHtml(row.platform || '未知')}</span></td>
+            <td>${statusText}</td>
+            <td><button class="secondary" data-edit-account="${escapeHtml(row.account)}">编辑</button> <button class="danger" data-delete-account="${escapeHtml(row.account)}">删除测试号</button></td>
+          </tr>`;
+        })
+        .filter(Boolean);
+      $('agentAccountDetailTable').innerHTML = table(['账号', '密码', '代理', '平台', '状态', '操作'], rows, '还没有代理账号明细');
+    }
 
-      const assignmentRows = (state.assignments || []).slice().sort((a, b) => {
+    function assignmentDisplayRows(keyword = '') {
+      const needle = String(keyword || '').trim().toLowerCase();
+      const matches = (values) => !needle || values.some((value) => String(value || '').toLowerCase().includes(needle));
+      const rows = (state.assignments || []).slice().sort((a, b) => {
         if (!a.endDate && b.endDate) return -1;
         if (a.endDate && !b.endDate) return 1;
         return String(b.startDate).localeCompare(String(a.startDate));
+      }).filter((item) => item.assigneeType !== 'agent').filter((item) => {
+        const account = state.accounts.find((row) => row.account === item.account) || {};
+        return matches([item.account, item.assignee, item.assigneeType, account.platform || T.detectPlatform(item.account)]);
       }).map((item) => {
         const account = state.accounts.find((row) => row.account === item.account) || {};
-        const status = item.endDate ? `已结束，${T.COOLDOWN_DAYS}天后可用` : '使用中';
+        const status = item.endDate ? `隔离中，${T.COOLDOWN_DAYS}天后可用` : '使用中';
         return `<tr>
           <td>${item.account}</td>
           <td><span class="badge">${account.platform || T.detectPlatform(item.account) || '未知'}</span></td>
@@ -1554,10 +1939,39 @@ TN-MHB-mb0-01046
           <td>${item.startDate}</td>
           <td>${item.endDate || '-'}</td>
           <td>${status}</td>
-          <td>${item.endDate ? '' : `<button class="danger" data-release="${item.account}">释放/回收</button>`}</td>
+          <td>${item.endDate ? '' : `<button class="secondary" data-edit-account="${item.account}">编辑</button> <button class="secondary" data-revoke="${item.account}">撤销误分</button> <button class="danger" data-release="${item.account}">退号回收</button> <button class="danger" data-delete-account="${item.account}">删除测试号</button>`}</td>
         </tr>`;
       });
-      $('assignmentsTable').innerHTML = table(['账号', '平台', '类型', '归属', '代理价', '开始', '结束', '状态', '操作'], assignmentRows, '还没有分配记录');
+
+      const tracked = new Set((state.assignments || []).map((item) => item.account));
+      const manualRows = state.accounts
+        .filter((row) => !tracked.has(row.account))
+        .map((row) => ({ ...row, platform: row.platform || T.detectPlatform(row.account) }))
+        .filter((row) => String(row.wechat || '').trim())
+        .filter((row) => ownerKindFromRemark(row.wechat).type !== 'agent')
+        .filter((row) => matches([row.account, row.password, row.wechat, row.platform]))
+        .map((row) => {
+          const manual = ownerKindFromRemark(row.wechat);
+          return `<tr>
+            <td>${row.account}</td>
+            <td><span class="badge">${row.platform || '未知'}</span></td>
+            <td>${manual.type === 'agent' ? '代理' : '兼职'}</td>
+            <td>${escapeHtml(manual.owner)}</td>
+            <td></td>
+            <td>备注归属</td>
+            <td>-</td>
+            <td>使用中</td>
+            <td><button class="secondary" data-edit-account="${row.account}">编辑</button> <button class="danger" data-delete-account="${row.account}">删除测试号</button></td>
+          </tr>`;
+        });
+      return rows.concat(manualRows);
+    }
+
+    function renderAssignmentPanel() {
+      $('assignStartDate').value = state.selectedDate;
+      $('agentStartDate').value = state.selectedDate;
+      const assignmentRows = assignmentDisplayRows($('assignmentSearch').value);
+      $('assignmentsTable').innerHTML = table(['账号', '平台', '类型', '归属', '代理价', '开始', '结束', '状态', '操作'], assignmentRows, '还没有兼职分配记录');
     }
 
     function renderReturns() {
@@ -1607,6 +2021,22 @@ TN-MHB-mb0-01046
       $('agentTable').innerHTML = table(['代理', 'XX', 'qq', 'HH', 'TN', '合计单数', '应付代理', '上家应收', '利润'], agentRows, '当天还没有代理结算数据');
     }
 
+    function renderAgentAccountDaily() {
+      const rows = result().accountRows
+        .filter((row) => row.assigneeType === 'agent' && row.count > 0)
+        .sort((a, b) => String(a.wechat).localeCompare(String(b.wechat), 'zh-Hans-CN') || T.PLATFORM_ORDER.indexOf(a.platform) - T.PLATFORM_ORDER.indexOf(b.platform) || a.account.localeCompare(b.account))
+        .map((row) => `<tr>
+          <td>${escapeHtml(row.wechat)}</td>
+          <td>${escapeHtml(row.account)}</td>
+          <td><span class="badge">${escapeHtml(row.platform || '未知')}</span></td>
+          <td>${row.count}</td>
+          <td>${yuan(row.payable)}</td>
+          <td>${yuan(row.receivable)}</td>
+          <td>${yuan(row.profit)}</td>
+        </tr>`);
+      $('agentAccountDailyTable').innerHTML = table(['代理', '账号', '平台', '单数', '应付代理', '上家应收', '利润'], rows, '当天还没有代理做单账号');
+    }
+
     function platformCell(row, platform) {
       const item = row.platforms && row.platforms[platform] ? row.platforms[platform] : { count: 0, payable: 0 };
       if (!item.count) return '<span class="muted">0单<br>￥0.00</span>';
@@ -1627,18 +2057,9 @@ TN-MHB-mb0-01046
           const parts = ['XX', 'qq', 'HH', 'TN'].map((key) => platformCopyPart(row, key)).filter(Boolean).join('，');
           return `${row.wechat}：${parts}，合计${row.count}单，应结 ${yuan(row.payable)}`;
         });
-      const agentLines = r.byAssigneePlatform
-        .filter((row) => row.count > 0 && row.assigneeType === 'agent')
-        .map((row) => {
-          const parts = ['XX', 'qq', 'HH', 'TN'].map((key) => platformCopyPart(row, key)).filter(Boolean).join('，');
-          return `${row.wechat}：${parts}，合计${row.count}单，应结 ${yuan(row.payable)}，上家应收 ${yuan(row.receivable)}`;
-        });
-      $('copyText').textContent = [
+      $('workerCopyText').textContent = [
         `${state.selectedDate} 兼职结算`,
         workerLines.length ? workerLines.join('\n') : '暂无兼职结算',
-        '',
-        `${state.selectedDate} 代理结算`,
-        agentLines.length ? agentLines.join('\n') : '暂无代理结算',
       ].join('\n');
     }
 
@@ -1654,6 +2075,25 @@ TN-MHB-mb0-01046
           <div style="margin-top:8px"><label>链接</label><input data-link="${key}" value="${cfg.link || ''}"></div>
         </div>`;
       }).join('');
+    }
+
+    function renderOwnerRates() {
+      const overrides = state.rateOverrides || { worker: {}, agent: {} };
+      const rows = [];
+      ['worker', 'agent'].forEach((type) => {
+        Object.entries(overrides[type] || {}).forEach(([name, rates]) => {
+          T.PLATFORM_ORDER.forEach((platform) => {
+            if (rates[platform] === undefined) return;
+            rows.push(`<tr>
+              <td>${type === 'agent' ? '代理' : '兼职'}</td>
+              <td>${escapeHtml(name)}</td>
+              <td><span class="badge">${platform}</span></td>
+              <td>${rates[platform]}</td>
+            </tr>`);
+          });
+        });
+      });
+      $('ownerRateTable').innerHTML = table(['类型', '姓名', '平台', '单价'], rows, '还没有单人价格');
     }
 
     function loadCloudConfig() {
@@ -1682,6 +2122,38 @@ TN-MHB-mb0-01046
       $('cloudSqlText').value = T.cloudTableSql();
     }
 
+    function renderDataStatus() {
+      if (!$('dataStatusBox')) return;
+      const days = Object.keys(state.days || {}).length;
+      $('dataStatusBox').innerHTML = `当前页面数据：账号 ${state.accounts.length} 个，分配记录 ${state.assignments.length} 条，代理 ${state.agents.length} 个，日数据 ${days} 天。<br><span class="small muted">当前地址：${escapeHtml(location.href)}。换网址、换浏览器、换手机时，本地数据不会自动跟过去，要用备份或云同步。</span>`;
+    }
+
+    function renderStorageScan() {
+      const rows = T.scanStoredBackups ? T.scanStoredBackups(localStorage) : [];
+      if (!$('storageScanBox')) return;
+      if (!rows.length) {
+        $('storageScanBox').innerHTML = '<div class="empty">本页地址下没有扫描到其他可恢复数据。旧数据可能在旧网址、旧文件地址、手机浏览器或 GitHub 线上网址里。</div>';
+        return;
+      }
+      const best = rows[0];
+      $('storageScanBox').innerHTML = `
+        <div class="notice">扫描到这些本页浏览器数据。建议先恢复账号最多的一条；恢复前可以先点“导出备份”留一份当前数据。</div>
+        <div class="toolbar">
+          <button data-restore-storage="0">恢复账号最多的数据（${best.accounts}个账号 / ${best.assignments}条分配）</button>
+          <button class="secondary" id="copyBestStorageBtn" data-copy-storage="0">复制这条备份</button>
+        </div>
+        <div class="table-wrap" style="margin-bottom:12px"><table>${table(['存储项', '账号', '分配', '代理', '日数据', '操作'], rows.map((row, index) => `<tr>
+          <td>${escapeHtml(row.key)}</td>
+          <td>${row.accounts}</td>
+          <td>${row.assignments}</td>
+          <td>${row.agents}</td>
+          <td>${row.days}</td>
+          <td><button class="secondary" data-restore-storage="${index}">恢复这条</button></td>
+        </tr>`), '暂无')}</table></div>
+      `;
+      window.__storageScanRows = rows;
+    }
+
     function cloudConfigFromInputs() {
       const config = saveCloudConfig();
       const password = $('cloudPasswordInput').value;
@@ -1691,6 +2163,68 @@ TN-MHB-mb0-01046
 
     function friendlyCloudError(error) {
       return T.cloudFriendlyError ? T.cloudFriendlyError(error) : (error.message || error);
+    }
+
+    function openAccountEditor(account) {
+      const item = state.accounts.find((row) => row.account === account);
+      if (!item) return toast('没有找到这个账号');
+      $('editAccountOriginal').value = item.account;
+      $('editAccountInput').value = item.account;
+      $('editPasswordInput').value = item.password || '';
+      $('editWechatInput').value = item.wechat || '';
+      $('editPlatformInput').value = item.platform || T.detectPlatform(item.account) || 'XX';
+      $('editAccountStatusBox').style.display = 'none';
+      $('editAccountPanel').style.display = 'block';
+    }
+
+    function closeAccountEditor() {
+      $('editAccountPanel').style.display = 'none';
+    }
+
+    function deleteAccountFromUi(account) {
+      if (!confirm(`确定删除测试号 ${account}？只有没有回传订单的账号才会删除；有订单会自动拦截。`)) return;
+      const result = T.deleteAccountSafely(state, account);
+      if (!result.deleted) return toast(result.reason || '删除失败');
+      T.saveState(state);
+      closeAccountEditor();
+      render();
+      toast(`已删除测试号 ${account}`);
+    }
+
+    function rowsToReturnText(rows) {
+      return rows
+        .map((row) => Array.isArray(row) ? row : [])
+        .map((row) => {
+          const account = String(row[0] || '').trim();
+          const count = String(row[1] === undefined ? '' : row[1]).trim();
+          if (!account || !count || account === '账号') return '';
+          return `${account} ${count}`;
+        })
+        .filter(Boolean)
+        .join('\n');
+    }
+
+    async function handleReturnFile() {
+      const file = $('returnFileInput').files && $('returnFileInput').files[0];
+      if (!file) return toast('请先选择表格文件');
+      const name = file.name.toLowerCase();
+      if (name.endsWith('.csv') || name.endsWith('.txt')) {
+        $('returnText').value = await file.text();
+        toast('已读取文件内容，请点“解析并保存到当天”');
+        return;
+      }
+      if (!window.XLSX) {
+        toast('Excel解析库没有加载成功。可以把表格另存为CSV，或直接复制表格三列粘贴进来。');
+        return;
+      }
+      const buffer = await file.arrayBuffer();
+      const workbook = window.XLSX.read(buffer, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = window.XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false });
+      const text = rowsToReturnText(rows);
+      if (!text) return toast('表格里没有识别到账号和审核通过单数');
+      $('returnText').value = text;
+      toast('已从表格提取账号和通过单数，请点“解析并保存到当天”');
     }
 
     async function uploadCloudBackup() {
@@ -1738,7 +2272,13 @@ TN-MHB-mb0-01046
       const map = new Map(state.accounts.map((row) => [row.account, row]));
       rows.forEach((row) => {
         if (!row.account) return;
-        map.set(row.account, { ...map.get(row.account), ...row, platform: row.platform || T.detectPlatform(row.account) });
+        const existing = map.get(row.account) || {};
+        map.set(row.account, {
+          account: row.account,
+          password: row.password || existing.password || '',
+          wechat: row.wechat || existing.wechat || '',
+          platform: row.platform || existing.platform || T.detectPlatform(row.account),
+        });
       });
       state.accounts = [...map.values()].sort((a, b) => a.account.localeCompare(b.account));
       T.saveState(state);
@@ -1747,6 +2287,14 @@ TN-MHB-mb0-01046
 
     function toast(message) {
       alert(message);
+    }
+
+    function showInlineStatus(id, message, type = 'notice') {
+      const box = $(id);
+      if (!box) return;
+      box.style.display = 'block';
+      box.className = type === 'warn' ? 'notice warn' : 'notice';
+      box.textContent = message;
     }
 
     async function copyText(text) {
@@ -1776,79 +2324,74 @@ TN-MHB-mb0-01046
     });
 
     $('importRosterBtn').addEventListener('click', () => {
-      const rows = T.parseAccountRoster($('rosterText').value);
-      if (!rows.length) return toast('没有识别到账号。请检查格式：账号 密码(微信备注)');
+      const rows = applyImportPlatform(T.parseAccountRoster($('rosterText').value), $('rosterPlatformInput').value);
+      if (!rows.length) {
+        showInlineStatus('rosterStatusBox', '没有识别到账号。格式要像：XXjt57-73 密码(微信名)，每行一个。', 'warn');
+        return toast('没有识别到账号。请检查格式：账号 密码(微信备注)');
+      }
       upsertAccounts(rows);
+      showInlineStatus('rosterStatusBox', `已识别 ${rows.length} 行，当前库存一共 ${state.accounts.length} 个账号。可以到“派发号 > 闲置账号”查看可派发账号。`);
       toast(`已导入/更新 ${rows.length} 个账号`);
     });
 
-    $('clearRosterTextBtn').addEventListener('click', () => { $('rosterText').value = ''; });
-
-    $('accountInput').addEventListener('input', syncManualAccountPlatform);
-
-    $('addAccountBtn').addEventListener('click', () => {
-      const account = $('accountInput').value.trim();
-      if (!account) return toast('请先填写账号');
-      upsertAccounts([{
-        account,
-        password: $('passwordInput').value.trim(),
-        wechat: $('wechatInput').value.trim() || '未备注',
-        platform: $('platformInput').value || T.detectPlatform(account),
-      }]);
-      $('accountInput').value = '';
-      $('passwordInput').value = '';
-      $('wechatInput').value = '';
+    $('clearRosterTextBtn').addEventListener('click', () => {
+      $('rosterText').value = '';
+      if ($('rosterStatusBox')) $('rosterStatusBox').style.display = 'none';
     });
 
     $('accountsTable').addEventListener('click', (event) => {
-      const edit = event.target.dataset.edit;
-      const del = event.target.dataset.delete;
-      if (edit) {
-        const row = state.accounts.find((item) => item.account === edit);
-        if (!row) return;
-        $('accountInput').value = row.account;
-        $('passwordInput').value = row.password || '';
-        $('wechatInput').value = row.wechat || '';
-        $('platformInput').value = row.platform || T.detectPlatform(row.account);
-        syncManualAccountPlatform();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-      if (del && confirm(`确定删除账号 ${del}？`)) {
-        state.accounts = state.accounts.filter((item) => item.account !== del);
-        T.saveState(state);
-        render();
-      }
-    });
-
-    $('accountGroupTable').addEventListener('click', (event) => {
       const value = event.target.dataset.copyValue;
-      if (value === undefined) return;
-      copyText(value);
+      if (value !== undefined) return copyText(value);
+      const edit = event.target.dataset.editAccount;
+      if (edit) return openAccountEditor(edit);
     });
 
     $('accountSearch').addEventListener('input', renderAccounts);
+    $('workerGroupSearch').addEventListener('input', renderOwnerGroups);
+    $('agentGroupSearch').addEventListener('input', renderOwnerGroups);
+    $('assignmentSearch').addEventListener('input', renderAssignmentPanel);
+
+    function handleCopyFromTable(event) {
+      const value = event.target.dataset.copyValue;
+      if (value !== undefined) copyText(value);
+      const edit = event.target.dataset.editAccount;
+      if (edit) openAccountEditor(edit);
+      const del = event.target.dataset.deleteAccount;
+      if (del) deleteAccountFromUi(del);
+    }
+
+    $('workerGroupTable').addEventListener('click', handleCopyFromTable);
+    $('agentGroupTable').addEventListener('click', handleCopyFromTable);
+    $('agentAccountDetailTable').addEventListener('click', handleCopyFromTable);
+
+    $('closeAccountEditBtn').addEventListener('click', closeAccountEditor);
+    $('saveAccountEditBtn').addEventListener('click', () => {
+      const account = $('editAccountOriginal').value;
+      const updated = T.updateAccount(state, {
+        account,
+        password: $('editPasswordInput').value,
+        wechat: $('editWechatInput').value,
+        platform: $('editPlatformInput').value,
+      });
+      if (!updated) return toast('保存失败，没有找到这个账号');
+      T.saveState(state);
+      render();
+      closeAccountEditor();
+      toast('账号已保存');
+    });
+    $('deleteAccountEditBtn').addEventListener('click', () => {
+      const account = $('editAccountOriginal').value;
+      if (account) deleteAccountFromUi(account);
+    });
 
     $('renameAssigneeBtn').addEventListener('click', () => {
       const from = $('renameFromInput').value.trim();
       const to = $('renameToInput').value.trim();
-      if (!from || !to) return toast('请填写原微信名和统一后的微信名');
+      if (!from || !to) return toast('请填写原微信名和要改成的微信名');
       const changed = T.renameAssignee(state, { from, to });
       T.saveState(state);
       render();
-      toast(`已调整 ${changed} 条记录`);
-    });
-
-    $('sampleAccountsBtn').addEventListener('click', () => {
-      $('rosterText').value = [
-        'XXjt57-83 uR4KNDCnKHbF(橘子)',
-        'qqXX15-70 JcX9sCzCh9Bz(。745671)',
-        'HH-qq15.72 XBuNxpCUv3rG(初遇)',
-        'TN-MHB-mb0-01069 py6ZqT9PPJFX(橘子)',
-        'XXjt57-91 xReYqZMN5G7Z',
-        'qqXX15-77 WJPTz3Dgs9wC',
-        'HH-qq15.80 W8PBmr7GjzdT',
-        'TN-MHB-mb0-01075 vV6H4aVXyQ9V',
-      ].join('\n');
+      toast(changed ? `已调整 ${changed} 条归属` : '没有找到需要调整的微信名');
     });
 
     $('assignWorkerBtn').addEventListener('click', () => {
@@ -1871,22 +2414,6 @@ TN-MHB-mb0-01046
       copyText($('assignmentText').value || '暂无可复制的发号文本');
     });
 
-    $('assignAgentBtn').addEventListener('click', () => {
-      const agent = $('agentNameInput').value.trim();
-      if (!agent) return toast('请先输入代理名称');
-      const accounts = [...document.querySelectorAll('[data-agent-account]:checked')].map((item) => item.dataset.agentAccount);
-      if (!accounts.length) return toast('请先选择要分给代理的账号');
-      const res = T.assignAccountsToAgent(state, {
-        agent,
-        rate: $('agentRateInput').value,
-        startDate: $('agentStartDate').value || state.selectedDate,
-        accounts,
-      });
-      T.saveState(state);
-      render();
-      toast(`已分给代理 ${res.assigned.length} 个账号${res.skipped.length ? `，跳过 ${res.skipped.length} 个不可用账号` : ''}`);
-    });
-
     $('importAgentAccountsBtn').addEventListener('click', () => {
       const agent = $('agentNameInput').value.trim();
       if (!agent) return toast('请先输入代理名称');
@@ -1901,26 +2428,31 @@ TN-MHB-mb0-01046
       });
       T.saveState(state);
       render();
-      toast(`已入库 ${res.imported.length} 个账号，并分给代理 ${res.assigned.length} 个`);
-    });
-
-    $('selectAllAgentAccountsBtn').addEventListener('click', () => {
-      document.querySelectorAll('[data-agent-account]').forEach((item) => { item.checked = true; });
-    });
-
-    $('clearAgentAccountsBtn').addEventListener('click', () => {
-      document.querySelectorAll('[data-agent-account]').forEach((item) => { item.checked = false; });
+      toast(`已归属到代理 ${res.assigned.length} 个账号${res.skipped.length ? `，跳过 ${res.skipped.length} 个不可用账号` : ''}`);
     });
 
     $('assignmentsTable').addEventListener('click', (event) => {
+      const edit = event.target.dataset.editAccount;
+      if (edit) return openAccountEditor(edit);
+      const del = event.target.dataset.deleteAccount;
+      if (del) return deleteAccountFromUi(del);
       const account = event.target.dataset.release;
+      const revoke = event.target.dataset.revoke;
+      if (revoke) {
+        if (!confirm(`确定撤销账号 ${revoke} 的当前分配？适合处理按错分给代理/兼职的情况，撤销后账号会立刻回到原本可用状态。`)) return;
+        const revoked = T.revokeActiveAssignment(state, revoke);
+        if (!revoked) return toast('这个账号当前没有使用中的分配记录');
+        T.saveState(state);
+        render();
+        return toast(`已撤销 ${revoke} 的当前分配`);
+      }
       if (!account) return;
-      if (!confirm(`确定释放/回收账号 ${account}？释放后 7 天内不会再分配。`)) return;
+      if (!confirm(`确定退号回收账号 ${account}？没有订单会立即释放；已有订单记录会进入 7 天隔离。`)) return;
       const released = T.releaseAssignment(state, account, state.selectedDate);
       if (!released) return toast('这个账号当前没有使用中的分配记录');
       T.saveState(state);
       render();
-      toast(`已释放 ${account}，7 天后可重新分配`);
+      toast(released.immediate ? `已释放 ${account}，可立即重新分配` : `已回收 ${account}，有订单记录，7 天后可重新分配`);
     });
 
     $('parseReturnBtn').addEventListener('click', () => {
@@ -1932,6 +2464,8 @@ TN-MHB-mb0-01046
       toast(`已保存 ${rows.length} 条回传数据到 ${state.selectedDate}`);
       render();
     });
+
+    $('loadReturnFileBtn').addEventListener('click', handleReturnFile);
 
     $('sampleReturnBtn').addEventListener('click', () => {
       $('returnText').value = [
@@ -1980,6 +2514,32 @@ TN-MHB-mb0-01046
       toast('价格已保存');
     });
 
+    $('saveOwnerRateBtn').addEventListener('click', () => {
+      const ok = T.setAssigneeRate(state, {
+        type: $('rateOwnerTypeInput').value,
+        name: $('rateOwnerNameInput').value,
+        platform: $('ratePlatformInput').value,
+        rate: $('rateValueInput').value,
+      });
+      if (!ok) return toast('请把类型、完整名字、平台和单价填完整');
+      T.saveState(state);
+      render();
+      toast('单人价格已保存');
+    });
+
+    $('clearOwnerRateBtn').addEventListener('click', () => {
+      const ok = T.setAssigneeRate(state, {
+        type: $('rateOwnerTypeInput').value,
+        name: $('rateOwnerNameInput').value,
+        platform: $('ratePlatformInput').value,
+        rate: '',
+      });
+      if (!ok) return toast('请把类型、完整名字和平台填完整');
+      T.saveState(state);
+      render();
+      toast('单人价格已清除');
+    });
+
     $('resetPricesBtn').addEventListener('click', () => {
       if (!confirm('确定恢复默认价格？')) return;
       state.platforms = T.restoreState({ platforms: T.DEFAULT_PLATFORMS }).platforms;
@@ -2000,7 +2560,36 @@ TN-MHB-mb0-01046
         render();
         toast(result.mode === 'accounts' ? `已从片段导入/更新 ${result.count} 个账号` : '备份已导入');
       } catch (error) {
-        toast('备份格式不正确，导入失败。请从“导出备份”的第一行开始完整复制，或至少复制包含 account/password/wechat 的账号片段。');
+        toast(`导入失败：${error.message || error}。请尽量从“导出备份”的第一行完整复制；如果是旧页面数据，可以先点“扫描本页旧数据”。`);
+      }
+    });
+
+    $('scanStorageBtn').addEventListener('click', renderStorageScan);
+
+    $('storageScanBox').addEventListener('click', (event) => {
+      const index = event.target.dataset.restoreStorage;
+      const copyIndex = event.target.dataset.copyStorage;
+      if (copyIndex !== undefined) {
+        const rows = window.__storageScanRows || [];
+        const row = rows[Number(copyIndex)];
+        if (!row) return toast('这条数据已经失效，请重新扫描');
+        $('backupText').value = row.raw;
+        return copyText(row.raw);
+      }
+      if (index === undefined) return;
+      const rows = window.__storageScanRows || [];
+      const row = rows[Number(index)];
+      if (!row) return toast('这条数据已经失效，请重新扫描');
+      if (!confirm(`确定恢复 ${row.key}？当前页面数据会被覆盖。恢复前建议先导出备份。`)) return;
+      try {
+        state = T.restoreState(row.raw);
+        T.saveState(state);
+        render();
+        renderStorageScan();
+        showInlineStatus('dataStatusBox', `已恢复 ${row.key}：账号 ${row.accounts} 个，分配 ${row.assignments} 条，代理 ${row.agents} 个，日数据 ${row.days} 天。`);
+        toast(`已恢复：账号 ${row.accounts} 个，分配 ${row.assignments} 条`);
+      } catch (error) {
+        toast(`恢复失败：${error.message || error}`);
       }
     });
 
