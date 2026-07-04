@@ -970,6 +970,83 @@ TN-MHB-mb0-01046
     return JSON.stringify(state, null, 2);
   }
 
+  function mergeAccountRows(state, rows) {
+    const next = restoreState(state);
+    const map = new Map(next.accounts.map((row) => [row.account, row]));
+    rows.map(normalizeAccount).forEach((row) => {
+      if (!row.account) return;
+      map.set(row.account, { ...map.get(row.account), ...row, platform: row.platform || detectPlatform(row.account) });
+    });
+    next.accounts = [...map.values()].sort((a, b) => a.account.localeCompare(b.account));
+    return next;
+  }
+
+  function parseLooseBackupAccounts(text) {
+    const rows = [];
+    const blocks = String(text || '').match(/\{[^{}]*"account"\s*:\s*"[^"]+"[^{}]*\}/g) || [];
+    blocks.forEach((block) => {
+      try {
+        const item = JSON.parse(block.replace(/,\s*\}/g, '}'));
+        if (item && item.account) rows.push(item);
+      } catch (error) {
+        // Fall back to line scanning below.
+      }
+    });
+
+    const found = new Set(rows.map((row) => row.account));
+    let current = null;
+    String(text || '').split(/\r?\n/).forEach((line) => {
+      const account = line.match(/"account"\s*:\s*"([^"]+)"/);
+      if (account) {
+        if (current && current.account && !found.has(current.account)) rows.push(current);
+        current = { account: account[1] };
+        return;
+      }
+      if (!current) return;
+      const password = line.match(/"password"\s*:\s*"([^"]*)"/);
+      if (password) current.password = password[1];
+      const wechat = line.match(/"wechat"\s*:\s*"([^"]*)"/);
+      if (wechat) current.wechat = wechat[1];
+      const platform = line.match(/"platform"\s*:\s*"([^"]*)"/);
+      if (platform) current.platform = platform[1];
+    });
+    if (current && current.account && !found.has(current.account)) rows.push(current);
+
+    const unique = new Map();
+    rows.forEach((row) => {
+      if (!row.account) return;
+      unique.set(row.account, {
+        account: row.account,
+        password: row.password || '',
+        wechat: row.wechat || '',
+        platform: row.platform || detectPlatform(row.account),
+      });
+    });
+    return [...unique.values()];
+  }
+
+  function importBackupState(currentState, input) {
+    const text = String(input || '').trim();
+    if (!text) throw new Error('empty backup');
+
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) {
+        const rows = parsed.filter((item) => item && item.account);
+        if (!rows.length) throw new Error('no account rows');
+        return { state: mergeAccountRows(currentState, rows), mode: 'accounts', count: rows.length };
+      }
+      if (parsed && parsed.account) {
+        return { state: mergeAccountRows(currentState, [parsed]), mode: 'accounts', count: 1 };
+      }
+      return { state: restoreState(parsed), mode: 'full', count: 0 };
+    } catch (error) {
+      const rows = parseLooseBackupAccounts(text);
+      if (!rows.length) throw error;
+      return { state: mergeAccountRows(currentState, rows), mode: 'accounts', count: rows.length };
+    }
+  }
+
   function restoreState(json) {
     const parsed = typeof json === 'string' ? JSON.parse(json) : json;
     const defaults = createDefaultState();
@@ -1021,6 +1098,7 @@ TN-MHB-mb0-01046
     releaseAssignment,
     formatAssignmentText,
     serializeState,
+    importBackupState,
     restoreState,
     saveState,
     loadState,
@@ -1628,12 +1706,13 @@ TN-MHB-mb0-01046
 
     $('importBackupBtn').addEventListener('click', () => {
       try {
-        state = T.restoreState($('backupText').value);
+        const result = T.importBackupState(state, $('backupText').value);
+        state = result.state;
         T.saveState(state);
         render();
-        toast('备份已导入');
+        toast(result.mode === 'accounts' ? `已从片段导入/更新 ${result.count} 个账号` : '备份已导入');
       } catch (error) {
-        toast('备份格式不正确，导入失败');
+        toast('备份格式不正确，导入失败。请从“导出备份”的第一行开始完整复制，或至少复制包含 account/password/wechat 的账号片段。');
       }
     });
 
