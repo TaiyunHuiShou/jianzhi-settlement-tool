@@ -399,6 +399,27 @@ TN-MHB-mb0-01046
             <textarea id="backupText" placeholder="导出的备份会显示在这里；也可以把备份 JSON 粘贴进来再点导入"></textarea>
             <div class="notice" style="margin-top:12px">这个工具的数据存在当前浏览器里。换手机、清缓存、换浏览器前，先导出备份。</div>
           </div>
+          <div class="card">
+            <h2>云同步</h2>
+            <div class="notice">先在 Supabase 建表，再填下面配置。上传前会用“同步密码”加密，云端保存的是密文；手机和电脑使用同一个同步码和同步密码即可同步。</div>
+            <div class="form-grid">
+              <div><label>Supabase 地址</label><input id="cloudUrlInput" placeholder="https://xxxx.supabase.co"></div>
+              <div><label>anon key</label><input id="cloudKeyInput" placeholder="Supabase anon public key"></div>
+              <div><label>同步码</label><input id="cloudSyncCodeInput" placeholder="例如：my-main-data"></div>
+              <div><label>同步密码</label><input id="cloudPasswordInput" type="password" placeholder="至少 6 位，自己记住"></div>
+            </div>
+            <div class="toolbar" style="margin-top:12px">
+              <button id="saveCloudConfigBtn">保存云配置</button>
+              <button class="secondary" id="uploadCloudBtn">上传到云端</button>
+              <button class="secondary" id="downloadCloudBtn">从云端同步</button>
+            </div>
+            <label>Supabase 建表 SQL</label>
+            <textarea id="cloudSqlText" readonly></textarea>
+            <div class="toolbar" style="margin-top:10px">
+              <button class="secondary" id="copyCloudSqlBtn">复制建表 SQL</button>
+            </div>
+            <div class="notice">注意：从云端同步会用云端数据覆盖当前浏览器数据。同步前不放心，可以先点“导出备份”。</div>
+          </div>
         </div>
       </section>
     </main>
@@ -970,6 +991,125 @@ TN-MHB-mb0-01046
     return JSON.stringify(state, null, 2);
   }
 
+  function cryptoApi() {
+    const api = root.crypto || (typeof globalThis !== 'undefined' ? globalThis.crypto : null);
+    if (!api || !api.subtle) throw new Error('当前浏览器不支持加密同步');
+    return api;
+  }
+
+  function bytesToBase64(bytes) {
+    if (typeof Buffer !== 'undefined') return Buffer.from(bytes).toString('base64');
+    let binary = '';
+    bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+    return btoa(binary);
+  }
+
+  function base64ToBytes(value) {
+    if (typeof Buffer !== 'undefined') return new Uint8Array(Buffer.from(value, 'base64'));
+    const binary = atob(value);
+    return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  }
+
+  async function deriveCloudKey(password, syncCode, salt, iterations = 150000) {
+    if (!password || String(password).length < 6) throw new Error('同步密码至少 6 位');
+    if (!syncCode) throw new Error('请填写同步码');
+    const subtle = cryptoApi().subtle;
+    const encoder = new TextEncoder();
+    const material = await subtle.importKey(
+      'raw',
+      encoder.encode(`${syncCode}:${password}`),
+      'PBKDF2',
+      false,
+      ['deriveKey']
+    );
+    return subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
+      material,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt', 'decrypt']
+    );
+  }
+
+  async function encryptCloudPayload(plainText, password, syncCode) {
+    const crypto = cryptoApi();
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const iterations = 150000;
+    const key = await deriveCloudKey(password, syncCode, salt, iterations);
+    const cipher = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      new TextEncoder().encode(String(plainText || ''))
+    );
+    return {
+      v: 1,
+      algorithm: 'AES-GCM',
+      kdf: 'PBKDF2-SHA256',
+      iterations,
+      salt: bytesToBase64(salt),
+      iv: bytesToBase64(iv),
+      cipher: bytesToBase64(new Uint8Array(cipher)),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  async function decryptCloudPayload(payload, password, syncCode) {
+    const item = typeof payload === 'string' ? JSON.parse(payload) : payload;
+    if (!item || !item.salt || !item.iv || !item.cipher) throw new Error('云端数据格式不正确');
+    const salt = base64ToBytes(item.salt);
+    const iv = base64ToBytes(item.iv);
+    const cipher = base64ToBytes(item.cipher);
+    const key = await deriveCloudKey(password, syncCode, salt, item.iterations || 150000);
+    const plain = await cryptoApi().subtle.decrypt({ name: 'AES-GCM', iv }, key, cipher);
+    return new TextDecoder().decode(plain);
+  }
+
+  function normalizeSupabaseUrl(url) {
+    return String(url || '').trim().replace(/\/+$/, '');
+  }
+
+  function buildSupabaseRequest({ url, key, syncCode, payload }) {
+    const base = normalizeSupabaseUrl(url);
+    const id = String(syncCode || '').trim();
+    if (!base || !key || !id) throw new Error('请填写 Supabase 地址、anon key 和同步码');
+    return {
+      endpoint: `${base}/rest/v1/settlement_sync?on_conflict=id`,
+      downloadEndpoint: `${base}/rest/v1/settlement_sync?id=eq.${encodeURIComponent(id)}&select=payload,updated_at`,
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates,return=representation',
+      },
+      body: {
+        id,
+        payload: JSON.stringify(payload),
+        updated_at: new Date().toISOString(),
+      },
+    };
+  }
+
+  function cloudTableSql() {
+    return [
+      'create table if not exists public.settlement_sync (',
+      '  id text primary key,',
+      '  payload text not null,',
+      '  updated_at timestamptz not null default now()',
+      ');',
+      '',
+      'alter table public.settlement_sync enable row level security;',
+      '',
+      'drop policy if exists "anon can manage encrypted sync" on public.settlement_sync;',
+      'create policy "anon can manage encrypted sync"',
+      'on public.settlement_sync',
+      'for all',
+      'to anon',
+      'using (true)',
+      'with check (true);',
+    ].join('\n');
+  }
+
   function mergeAccountRows(state, rows) {
     const next = restoreState(state);
     const map = new Map(next.accounts.map((row) => [row.account, row]));
@@ -1098,6 +1238,10 @@ TN-MHB-mb0-01046
     releaseAssignment,
     formatAssignmentText,
     serializeState,
+    encryptCloudPayload,
+    decryptCloudPayload,
+    buildSupabaseRequest,
+    cloudTableSql,
     importBackupState,
     restoreState,
     saveState,
@@ -1114,6 +1258,7 @@ TN-MHB-mb0-01046
 </script>
   <script>
     const T = window.SettlementTool;
+    const CLOUD_CONFIG_KEY = 'settlement-cloud-config-v1';
     let state = T.loadState();
     const $ = (id) => document.getElementById(id);
 
@@ -1150,6 +1295,7 @@ TN-MHB-mb0-01046
       renderWechat();
       renderCopyText();
       renderPriceSettings();
+      renderCloudSettings();
     }
 
     function yuan(value) {
@@ -1447,6 +1593,80 @@ TN-MHB-mb0-01046
       }).join('');
     }
 
+    function loadCloudConfig() {
+      try {
+        return JSON.parse(localStorage.getItem(CLOUD_CONFIG_KEY) || '{}');
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function saveCloudConfig() {
+      const config = {
+        url: $('cloudUrlInput').value.trim(),
+        key: $('cloudKeyInput').value.trim(),
+        syncCode: $('cloudSyncCodeInput').value.trim(),
+      };
+      localStorage.setItem(CLOUD_CONFIG_KEY, JSON.stringify(config));
+      return config;
+    }
+
+    function renderCloudSettings() {
+      const config = loadCloudConfig();
+      $('cloudUrlInput').value = config.url || '';
+      $('cloudKeyInput').value = config.key || '';
+      $('cloudSyncCodeInput').value = config.syncCode || '';
+      $('cloudSqlText').value = T.cloudTableSql();
+    }
+
+    function cloudConfigFromInputs() {
+      const config = saveCloudConfig();
+      const password = $('cloudPasswordInput').value;
+      if (!password) throw new Error('请填写同步密码');
+      return { ...config, password };
+    }
+
+    async function uploadCloudBackup() {
+      const config = cloudConfigFromInputs();
+      const encrypted = await T.encryptCloudPayload(T.serializeState(state), config.password, config.syncCode);
+      const request = T.buildSupabaseRequest({
+        url: config.url,
+        key: config.key,
+        syncCode: config.syncCode,
+        payload: encrypted,
+      });
+      const response = await fetch(request.endpoint, {
+        method: 'POST',
+        headers: request.headers,
+        body: JSON.stringify(request.body),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      toast('已加密上传到云端');
+    }
+
+    async function downloadCloudBackup() {
+      const config = cloudConfigFromInputs();
+      const request = T.buildSupabaseRequest({
+        url: config.url,
+        key: config.key,
+        syncCode: config.syncCode,
+        payload: {},
+      });
+      const response = await fetch(request.downloadEndpoint, {
+        method: 'GET',
+        headers: request.headers,
+      });
+      if (!response.ok) throw new Error(await response.text());
+      const rows = await response.json();
+      if (!rows.length) throw new Error('云端还没有这个同步码的数据');
+      const payload = typeof rows[0].payload === 'string' ? JSON.parse(rows[0].payload) : rows[0].payload;
+      const backup = await T.decryptCloudPayload(payload, config.password, config.syncCode);
+      state = T.restoreState(backup);
+      T.saveState(state);
+      render();
+      toast('已从云端同步到当前设备');
+    }
+
     function upsertAccounts(rows) {
       const map = new Map(state.accounts.map((row) => [row.account, row]));
       rows.forEach((row) => {
@@ -1713,6 +1933,30 @@ TN-MHB-mb0-01046
         toast(result.mode === 'accounts' ? `已从片段导入/更新 ${result.count} 个账号` : '备份已导入');
       } catch (error) {
         toast('备份格式不正确，导入失败。请从“导出备份”的第一行开始完整复制，或至少复制包含 account/password/wechat 的账号片段。');
+      }
+    });
+
+    $('saveCloudConfigBtn').addEventListener('click', () => {
+      saveCloudConfig();
+      toast('云配置已保存。同步密码不会保存，请自己记住。');
+    });
+
+    $('copyCloudSqlBtn').addEventListener('click', () => copyText($('cloudSqlText').value));
+
+    $('uploadCloudBtn').addEventListener('click', async () => {
+      try {
+        await uploadCloudBackup();
+      } catch (error) {
+        toast(`上传失败：${error.message || error}`);
+      }
+    });
+
+    $('downloadCloudBtn').addEventListener('click', async () => {
+      if (!confirm('从云端同步会覆盖当前设备数据。继续前建议先导出备份，确定继续？')) return;
+      try {
+        await downloadCloudBackup();
+      } catch (error) {
+        toast(`同步失败：${error.message || error}`);
       }
     });
 
