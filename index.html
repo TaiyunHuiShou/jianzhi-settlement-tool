@@ -299,6 +299,8 @@
                 <button id="copyAssignmentBtn">复制发号文本</button>
               </div>
             </div>
+            <label style="margin-top:10px">当前空闲账号预览</label>
+            <div id="workerFreePreview" class="table-wrap"></div>
           </div>
 
           <div class="card">
@@ -314,8 +316,17 @@
             <textarea id="agentImportText" placeholder="一次可粘贴 10 个左右，例如：
 XXjt57-61 ARpJhR4z6bDR
 XXjt57-62 BdMv8X7K7NzE
+Hqq27.2 zuDwhw38TEcM
 TN-MHB-mb0-01075 vV6H4aVXyQ9V"></textarea>
             <div class="toolbar" style="margin-top:10px">
+              <label style="margin:0">平台识别</label>
+              <select id="agentImportPlatformInput">
+                <option value="">自动识别</option>
+                <option value="XX">按 XX 入库</option>
+                <option value="qq">按 qq 入库</option>
+                <option value="HH">按 HH 入库</option>
+                <option value="TN">按 TN 入库</option>
+              </select>
               <button class="secondary" id="importAgentAccountsBtn">入库并分给代理</button>
             </div>
             <label style="margin-top:10px">选择空闲账号</label>
@@ -450,7 +461,7 @@ TN-MHB-mb0-01046
       workerRate: 0.35,
       bossRate: 0.65,
       timeLabel: '10点 12点 15点',
-      patterns: [/^HH/i],
+      patterns: [/^HH/i, /^Hqq/i],
     },
     TN: {
       name: 'TN',
@@ -647,6 +658,21 @@ TN-MHB-mb0-01046
     return { status: 'free' };
   }
 
+  function accountOwnerLabel(state, account, date = today()) {
+    const status = accountStatus(state, account, date);
+    if (status.status === 'assigned') {
+      const prefix = status.assignment.assigneeType === 'agent' ? '代理：' : '';
+      return `${prefix}${status.assignment.assignee}`;
+    }
+    if (status.status === 'manual') return status.assignee;
+    if (status.status === 'cooldown' && status.lastAssignment) {
+      const prefix = status.lastAssignment.assigneeType === 'agent' ? '代理：' : '';
+      return `${prefix}${status.lastAssignment.assignee}`;
+    }
+    const base = (state.accounts || []).find((item) => item.account === account);
+    return base ? String(base.wechat || '').trim() : '';
+  }
+
   function availableAccounts(state, date = today(), platforms = PLATFORM_ORDER) {
     const wanted = new Set(platforms);
     return (state.accounts || [])
@@ -743,8 +769,13 @@ TN-MHB-mb0-01046
     return state.accounts;
   }
 
-  function importAccountsForAgent(state, { agent, rate, startDate = today(), text = '' }) {
-    const imported = parseAccountRoster(text).map((item) => ({ ...item, wechat: '' }));
+  function importAccountsForAgent(state, { agent, rate, startDate = today(), text = '', platform = '' }) {
+    const fallbackPlatform = PLATFORM_ORDER.includes(platform) ? platform : '';
+    const imported = parseAccountRoster(text).map((item) => ({
+      ...item,
+      wechat: '',
+      platform: item.platform || fallbackPlatform,
+    }));
     upsertAccounts(state, imported);
     const result = assignAccountsToAgent(state, {
       agent,
@@ -1066,7 +1097,21 @@ TN-MHB-mb0-01046
   }
 
   function normalizeSupabaseUrl(url) {
-    return String(url || '').trim().replace(/\/+$/, '');
+    const base = String(url || '').trim().replace(/\/+$/, '');
+    if (!base) return '';
+    if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(base)) {
+      throw new Error('Supabase 地址应填写完整项目地址，例如：https://xxxx.supabase.co');
+    }
+    return base;
+  }
+
+  function cloudFriendlyError(error) {
+    const message = String(error && error.message ? error.message : error || '');
+    if (/Failed to fetch|NetworkError|Load failed/i.test(message)) {
+      return '无法连接 Supabase。请检查 Supabase 地址是否完整（例如 https://xxxx.supabase.co）、anon key 是否复制完整、是否已执行建表 SQL，手机/电脑网络是否能访问 Supabase。';
+    }
+    if (/Supabase 地址/.test(message)) return message;
+    return message || '未知错误';
   }
 
   function buildSupabaseRequest({ url, key, syncCode, payload }) {
@@ -1230,6 +1275,7 @@ TN-MHB-mb0-01046
     calculateSettlement,
     availableAccounts,
     accountStatus,
+    accountOwnerLabel,
     inventorySummary,
     renameAssignee,
     assignAccountsToWorker,
@@ -1241,6 +1287,7 @@ TN-MHB-mb0-01046
     encryptCloudPayload,
     decryptCloudPayload,
     buildSupabaseRequest,
+    cloudFriendlyError,
     cloudTableSql,
     importBackupState,
     restoreState,
@@ -1415,9 +1462,9 @@ TN-MHB-mb0-01046
     function renderAccounts() {
       const keyword = $('accountSearch').value.trim().toLowerCase();
       const rows = state.accounts
-        .filter((row) => !keyword || row.account.toLowerCase().includes(keyword) || String(row.wechat || '').toLowerCase().includes(keyword))
         .map((row) => {
           const status = T.accountStatus(state, row.account, state.selectedDate);
+          const owner = T.accountOwnerLabel(state, row.account, state.selectedDate);
           const statusText = status.status === 'assigned'
             ? `已分给${status.assignment.assigneeType === 'agent' ? '代理' : '兼职'}：${status.assignment.assignee}`
             : status.status === 'manual'
@@ -1425,16 +1472,25 @@ TN-MHB-mb0-01046
             : status.status === 'cooldown'
               ? `冷却中，可用日期 ${status.availableDate}`
               : '空闲';
+          if (keyword && ![
+            row.account,
+            row.password,
+            row.wechat,
+            owner,
+            row.platform || T.detectPlatform(row.account),
+            statusText,
+          ].some((value) => String(value || '').toLowerCase().includes(keyword))) return '';
           return `<tr>
           <td>${row.account}</td>
           <td>${row.password || ''}</td>
-          <td>${row.wechat || ''}</td>
+          <td>${owner || ''}</td>
           <td><span class="badge">${row.platform || T.detectPlatform(row.account) || '未知'}</span></td>
           <td>${statusText}</td>
           <td><button class="secondary" data-edit="${row.account}">编辑</button> <button class="danger" data-delete="${row.account}">删除</button></td>
         </tr>`;
-        });
-      $('accountsTable').innerHTML = table(['账号', '密码', '微信备注', '平台', '状态', '操作'], rows, '还没有账号，先批量导入或手动添加');
+        })
+        .filter(Boolean);
+      $('accountsTable').innerHTML = table(['账号', '密码', '归属/备注', '平台', '状态', '操作'], rows, '还没有账号，先批量导入或手动添加');
       renderAccountGroups(keyword);
     }
 
@@ -1467,13 +1523,20 @@ TN-MHB-mb0-01046
     function renderAssignmentPanel() {
       $('assignStartDate').value = state.selectedDate;
       $('agentStartDate').value = state.selectedDate;
-      const freeRows = T.availableAccounts(state, state.selectedDate).map((row) => `<tr>
-        <td><input type="checkbox" data-agent-account="${row.account}"></td>
+      const freeAccounts = T.availableAccounts(state, state.selectedDate);
+      const previewRows = freeAccounts.slice(0, 40).map((row) => `<tr>
+        <td><span class="badge">${row.platform || '未知'}</span></td>
         <td>${row.account}</td>
         <td>${row.password || ''}</td>
-        <td><span class="badge">${row.platform || '未知'}</span></td>
       </tr>`);
-      $('agentAccountChoices').innerHTML = `<table>${table(['选', '账号', '密码', '平台'], freeRows, '当前没有空闲账号可分给代理')}</table>`;
+      $('workerFreePreview').innerHTML = `<table>${table(['平台', '账号', '密码'], previewRows, '当前没有空闲账号')}</table>`;
+      const freeRows = freeAccounts.map((row) => `<tr>
+        <td><input type="checkbox" data-agent-account="${row.account}"></td>
+        <td><span class="badge">${row.platform || '未知'}</span></td>
+        <td>${row.account}</td>
+        <td>${row.password || ''}</td>
+      </tr>`);
+      $('agentAccountChoices').innerHTML = `<table>${table(['选', '平台', '账号', '密码'], freeRows, '当前没有空闲账号可分给代理')}</table>`;
 
       const assignmentRows = (state.assignments || []).slice().sort((a, b) => {
         if (!a.endDate && b.endDate) return -1;
@@ -1624,6 +1687,10 @@ TN-MHB-mb0-01046
       const password = $('cloudPasswordInput').value;
       if (!password) throw new Error('请填写同步密码');
       return { ...config, password };
+    }
+
+    function friendlyCloudError(error) {
+      return T.cloudFriendlyError ? T.cloudFriendlyError(error) : (error.message || error);
     }
 
     async function uploadCloudBackup() {
@@ -1830,6 +1897,7 @@ TN-MHB-mb0-01046
         rate: $('agentRateInput').value,
         startDate: $('agentStartDate').value || state.selectedDate,
         text,
+        platform: $('agentImportPlatformInput').value,
       });
       T.saveState(state);
       render();
@@ -1947,7 +2015,7 @@ TN-MHB-mb0-01046
       try {
         await uploadCloudBackup();
       } catch (error) {
-        toast(`上传失败：${error.message || error}`);
+        toast(`上传失败：${friendlyCloudError(error)}`);
       }
     });
 
@@ -1956,7 +2024,7 @@ TN-MHB-mb0-01046
       try {
         await downloadCloudBackup();
       } catch (error) {
-        toast(`同步失败：${error.message || error}`);
+        toast(`同步失败：${friendlyCloudError(error)}`);
       }
     });
 
