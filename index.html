@@ -67,7 +67,8 @@
       border-bottom: 1px solid var(--line);
     }
     .topbar-inner {
-      max-width: 1180px;
+      max-width: none;
+      width: 100%;
       margin: 0 auto;
       padding: 14px;
       display: flex;
@@ -77,7 +78,7 @@
     }
     .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; }
     .datebox { min-width: 150px; }
-    .wrap { max-width: 1180px; margin: 0 auto; padding: 14px; }
+    .wrap { max-width: none; width: 100%; margin: 0 auto; padding: 14px; }
     .view { display: none; }
     .view.active { display: block; }
     .grid { display: grid; gap: 12px; }
@@ -131,7 +132,7 @@
       bottom: 0;
       z-index: 30;
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(7, 1fr);
       background: #fff;
       border-top: 1px solid var(--line);
       box-shadow: 0 -8px 22px rgba(31, 41, 55, 0.08);
@@ -157,6 +158,39 @@
       max-height: 260px;
       overflow: auto;
     }
+    .settings-grid { display: grid; gap: 12px; }
+    .settings-block {
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+      margin-top: 12px;
+    }
+    .compact-platform-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .daily-split, .settlementConsoleGrid { display: grid; gap: 12px; }
+    .screenshot-table { min-width: 0; }
+    .screenshot-table th, .screenshot-table td {
+      white-space: normal;
+      vertical-align: top;
+      line-height: 1.35;
+    }
+    .screenshot-table td:first-child { font-weight: 800; min-width: 74px; }
+    .screenshot-task {
+      display: inline-block;
+      margin: 2px 8px 2px 0;
+      min-width: 82px;
+    }
+    .screenshot-total { font-weight: 800; color: var(--red-dark); }
+    #backToTopBtn {
+      position: fixed;
+      right: 14px;
+      bottom: 84px;
+      z-index: 60;
+      display: none;
+      width: 44px;
+      min-height: 44px;
+      padding: 0;
+      border-radius: 999px;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.22);
+    }
     .split { display: grid; gap: 12px; }
     .stack { display: grid; gap: 12px; }
     .overview-agent-card { margin-top: 12px; }
@@ -179,12 +213,61 @@
     .warn { color: var(--red-dark); font-weight: 700; }
     .ok { color: var(--green); font-weight: 700; }
     .small { font-size: 12px; }
+    .confirm-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(15, 23, 42, 0.48);
+    }
+    .confirm-box {
+      width: min(420px, 100%);
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 20px 70px rgba(15, 23, 42, 0.28);
+      overflow: hidden;
+    }
+    .confirm-message {
+      padding: 24px 18px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+    .confirm-actions { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
+    .confirm-actions button { border-radius: 0; min-height: 56px; background: #fff; }
+    .confirm-cancel { color: #223044; border-right: 1px solid var(--line); }
+    .confirm-ok { color: var(--red); }
+    .toast-box {
+      position: fixed;
+      left: 50%;
+      bottom: 84px;
+      z-index: 90;
+      transform: translateX(-50%);
+      max-width: min(520px, calc(100vw - 28px));
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: #0f172a;
+      color: #fff;
+      font-size: 14px;
+      line-height: 1.45;
+      box-shadow: 0 14px 40px rgba(15, 23, 42, 0.22);
+      display: none;
+      white-space: pre-wrap;
+    }
 
     @media (min-width: 860px) {
       .app { padding-bottom: 0; }
-      .wrap { padding: 18px; }
+      .wrap { padding: 18px 28px; }
       .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+      .settings-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+      .settings-wide { grid-column: 1 / -1; }
+      .daily-split, .settlementConsoleGrid { grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); align-items: start; }
       .overview-top { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: stretch; }
       .overview-top > .card { min-height: 205px; }
       .overview-side { display: grid; grid-template-rows: auto 1fr; }
@@ -192,7 +275,8 @@
       .tabs {
         position: sticky;
         top: 73px;
-        max-width: 1180px;
+        max-width: none;
+        width: calc(100% - 56px);
         margin: 0 auto;
         border: 1px solid var(--line);
         border-radius: 10px;
@@ -223,8 +307,9 @@
       <button class="tab active" data-view="overview"><span>⌂</span>总览</button>
       <button class="tab" data-view="accounts"><span>☷</span>入库/闲置</button>
       <button class="tab" data-view="assign"><span>派</span>发号</button>
+      <button class="tab" data-view="hive"><span>蜂</span>蜂箱</button>
       <button class="tab" data-view="import"><span>＋</span>回传结算</button>
-      <button class="tab" data-view="daily"><span>表</span>日结算</button>
+      <button class="tab" data-view="daily"><span>表</span>综合结算台</button>
       <button class="tab" data-view="settings"><span>⚙</span>设置</button>
     </nav>
 
@@ -265,7 +350,7 @@
       <section id="accounts" class="view">
         <div class="card">
             <h2>账号入库</h2>
-            <div class="notice">这里只负责把供号方给的新账号密码放进库存。重复导入不会清空已有归属；账号密码不做单个手动修改。</div>
+            <div class="notice">新账号直接按“账号 密码”导入即可。使用本工具之前已经手动分配过的账号，请在密码后面加兼职称呼，工具会按这个名字归属，支持批量导入。</div>
             <div class="toolbar" style="margin-bottom:10px">
               <label style="margin:0">入库平台</label>
               <select id="rosterPlatformInput">
@@ -279,7 +364,9 @@
             <textarea id="rosterText" placeholder="每行一个账号和密码，例如：
 XXjt57-83 uR4KNDCnKHbF
 qqXX15-70 JcX9sCzCh9Bz
-Hqq27.2 zuDwhw38TEcM"></textarea>
+
+如果是以前手动分配过的账号，在密码后面加兼职称呼：
+XXjt046-88 q8q8L3NHUHbC 钛云数码"></textarea>
             <div class="toolbar" style="margin-top:10px">
               <button id="importRosterBtn">导入到库存</button>
               <button class="secondary" id="clearRosterTextBtn">清空输入</button>
@@ -374,6 +461,52 @@ TN-MHB-mb0-01075 vV6H4aVXyQ9V"></textarea>
         </div>
       </section>
 
+      <section id="hive" class="view">
+        <div class="split">
+          <div class="card">
+            <h2>蜂箱账号目录</h2>
+            <div class="notice">蜂箱账号只用于统计归属，不需要派发、回收、7天限制。导错的账号可以直接删除后重新添加；只有回传里出现但目录里没有归属的账号，会进入未匹配等待落实。</div>
+            <div class="form-grid">
+              <div><label>归属类型</label><select id="hiveOwnerTypeInput"><option value="worker">兼职</option><option value="agent">代理</option></select></div>
+              <div><label>归属名称</label><input id="hiveOwnerInput" placeholder="例如：钛云数字 或 代理A"></div>
+            </div>
+            <textarea id="hiveRosterText" placeholder="每行一个蜂箱账号，也可以从 Excel/WPS 复制一列账号进来，例如：
+方迈-LSZB1-477860
+方迈-LSZB1-384296"></textarea>
+            <div class="toolbar" style="margin-top:10px">
+              <input id="hiveRosterFileInput" type="file" accept=".xlsx,.xls,.csv,.txt">
+              <button class="secondary" id="loadHiveRosterFileBtn">上传账号表格</button>
+              <button id="importHiveRosterBtn">导入蜂箱账号</button>
+              <button class="secondary" id="clearHiveRosterTextBtn">清空输入</button>
+            </div>
+            <div class="toolbar" style="margin-top:10px">
+              <input id="hiveAccountSearch" placeholder="搜索蜂箱账号或归属" style="max-width:320px">
+            </div>
+            <div class="table-wrap"><table id="hiveAccountTable"></table></div>
+          </div>
+
+          <div class="card">
+            <h2>蜂箱回传</h2>
+            <div class="notice">上传供号方给的蜂箱 Excel/WPS 表格，工具会读取“用户名 / 成功”，同一个蜂箱账号多行会自动合计。结算只按已导入的数据计算，今天没有蜂箱数据也不影响抖音结算。</div>
+            <textarea id="hiveReturnText" placeholder="也可以直接粘贴：
+方迈-LSZB1-477860 7
+方迈-LSZB1-477860 3
+方迈-LSZB1-203161 2"></textarea>
+            <div class="toolbar" style="margin-top:10px">
+              <input id="hiveReturnFileInput" type="file" accept=".xlsx,.xls,.csv,.txt">
+              <button class="secondary" id="loadHiveReturnFileBtn">上传蜂箱回传</button>
+              <button id="parseHiveReturnBtn">解析并保存蜂箱数据</button>
+              <button class="secondary" id="clearHiveReturnTextBtn">清空输入</button>
+              <button class="ghost" id="clearHiveReturnBtn">清空当天蜂箱</button>
+            </div>
+            <h3>蜂箱未匹配账号</h3>
+            <div id="hiveUnmatchedBox"></div>
+            <h3>当天蜂箱明细</h3>
+            <div class="table-wrap"><table id="hiveReturnTable"></table></div>
+          </div>
+        </div>
+      </section>
+
       <section id="import" class="view">
         <div class="card">
           <h2>回传数据录入</h2>
@@ -403,7 +536,7 @@ TN-MHB-mb0-01046
       </section>
 
       <section id="daily" class="view">
-        <div class="split">
+        <div class="daily-split settlementConsoleGrid">
           <div class="card">
             <h2>兼职结算</h2>
             <div class="table-wrap"><table id="wechatTable"></table></div>
@@ -425,6 +558,11 @@ TN-MHB-mb0-01046
             <div class="table-wrap"><table id="agentAccountDailyTable"></table></div>
           </div>
         </div>
+        <div class="card" id="settlementScreenshotPanel" style="margin-top:12px">
+          <h2>群发截图明细</h2>
+          <div class="notice">这里按兼职逐行汇总抖音四个平台和蜂箱，适合直接截图发群里核对；不依赖复制长文字，手机上也更容易看清。</div>
+          <div class="table-wrap"><table id="settlementScreenshotTable" class="screenshot-table"></table></div>
+        </div>
         <div class="card" style="margin-top:12px">
           <h2>兼职单人总结算</h2>
           <div class="toolbar">
@@ -435,27 +573,39 @@ TN-MHB-mb0-01046
       </section>
 
       <section id="settings" class="view">
-        <div class="split">
-          <div class="card">
+        <div class="settings-grid">
+          <div class="card settings-wide" id="displaySettingsCard">
             <h2>平台价格</h2>
-            <div class="notice">给代理使用时，可以把“上家”改成“成本方/渠道/供号方”，并把各平台成本价改成你希望他们看到的价格。</div>
+            <div class="notice">这里用于设置结算显示名称、平台成本价和任务链接。成本方名称可按实际叫法改成“成本方 / 渠道 / 供号方”，平台成本价按当前使用者自己的结算规则填写。</div>
             <div class="form-grid" style="margin-top:10px">
               <div><label>工具标题</label><input id="appTitleInput" placeholder="例如：兼职结算核对工具"></div>
               <div><label>标题说明</label><input id="appSubtitleInput" placeholder="例如：账号对应微信，回传自动算钱"></div>
               <div><label>成本方名称</label><input id="bossNameInput" placeholder="例如：成本方、渠道、供号方"></div>
               <div><button class="secondary" id="saveLabelsBtn">保存显示名称</button></div>
             </div>
-            <div id="priceSettings" class="grid"></div>
+            <div id="douyinSettingsCard" class="settings-block">
+              <h3>抖音团购</h3>
+              <div id="priceSettings" class="grid compact-platform-grid"></div>
+            </div>
+            <div id="hiveSettingsCard" class="settings-block">
+            <h3>蜂箱价格</h3>
+            <div class="form-grid">
+              <div><label>兼职单价</label><input id="hiveWorkerRateInput" type="number" step="0.01" placeholder="留空按 0 计算"></div>
+              <div><label>代理单价</label><input id="hiveAgentRateInput" type="number" step="0.01" placeholder="留空按 0 计算"></div>
+              <div><label><span class="bossRateLabel">成本方单价</span></label><input id="hiveBossRateInput" type="number" step="0.01" placeholder="留空按 0 计算"></div>
+            </div>
             <div class="toolbar" style="margin-top:12px">
               <button id="savePricesBtn">保存价格</button>
               <button class="secondary" id="resetPricesBtn">恢复默认价格</button>
             </div>
+            </div>
+            <div id="ownerRateSettingsCard" class="settings-block">
             <h3>单人价格</h3>
             <div class="notice">名字必须完全一致才会生效；“杨”和“杨桃李洲”会按两个人分别计算。</div>
             <div class="form-grid">
               <div><label>类型</label><select id="rateOwnerTypeInput"><option value="worker">兼职</option><option value="agent">代理</option></select></div>
               <div><label>微信/代理名</label><input id="rateOwnerNameInput" placeholder="必须完整输入，例如：杨桃李洲"></div>
-              <div><label>平台</label><select id="ratePlatformInput"><option value="XX">XX</option><option value="qq">qq</option><option value="HH">HH</option><option value="TN">TN</option></select></div>
+              <div><label>平台</label><select id="ratePlatformInput"><option value="XX">XX</option><option value="qq">qq</option><option value="HH">HH</option><option value="TN">TN</option><option value="hive">蜂箱</option></select></div>
               <div><label>单价</label><input id="rateValueInput" type="number" step="0.01" placeholder="例如：0.8"></div>
             </div>
             <div class="toolbar" style="margin-top:10px">
@@ -463,13 +613,15 @@ TN-MHB-mb0-01046
               <button class="ghost" id="clearOwnerRateBtn">清除这个单人价格</button>
             </div>
             <div class="table-wrap" style="margin-top:10px"><table id="ownerRateTable"></table></div>
+            </div>
           </div>
-          <div class="card">
+          <div class="card" id="backupSettingsCard">
             <h2>备份与恢复</h2>
             <div class="toolbar">
               <button id="exportBtn">导出备份</button>
               <button class="secondary" id="importBackupBtn">导入备份</button>
               <button class="secondary" id="scanStorageBtn">扫描本页旧数据</button>
+              <button class="danger" id="clearToolDataBtn">清空本工具数据</button>
             </div>
             <div id="dataStatusBox" class="notice"></div>
             <div id="storageScanBox"></div>
@@ -501,6 +653,19 @@ TN-MHB-mb0-01046
       </section>
     </main>
 
+    <button id="backToTopBtn" type="button" title="回到顶部">↑</button>
+
+    <div id="confirmMask" class="confirm-mask" role="dialog" aria-modal="true" aria-labelledby="confirmMessage">
+      <div class="confirm-box">
+        <div id="confirmMessage" class="confirm-message"></div>
+        <div class="confirm-actions">
+          <button id="confirmCancelBtn" class="confirm-cancel" type="button">取消</button>
+          <button id="confirmOkBtn" class="confirm-ok" type="button">确认</button>
+        </div>
+      </div>
+    </div>
+    <div id="toastBox" class="toast-box" role="status" aria-live="polite"></div>
+
     <div id="editAccountPanel" class="card" style="display:none; position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:20; width:min(560px,92vw); box-shadow:0 20px 60px rgba(15,23,42,.25)">
       <h2>编辑账号</h2>
       <input id="editAccountOriginal" type="hidden">
@@ -526,7 +691,7 @@ TN-MHB-mb0-01046
     XX: {
       name: 'XX',
       link: 'https://www.u8mm0j2j4.com/',
-      workerRate: 0.4,
+      workerRate: 0,
       bossRate: 0,
       timeLabel: '7:00-8:00 8:30-9:30',
       patterns: [/^XX/i],
@@ -534,7 +699,7 @@ TN-MHB-mb0-01046
     qq: {
       name: 'qq',
       link: 'https://www.ric1902rws.com/home',
-      workerRate: 0.5,
+      workerRate: 0,
       bossRate: 0,
       timeLabel: '8:01-8:20 8:40-9:20',
       patterns: [/^qq/i],
@@ -542,7 +707,7 @@ TN-MHB-mb0-01046
     HH: {
       name: 'HH',
       link: 'https://www.o3a07dqjd8.com/',
-      workerRate: 0.35,
+      workerRate: 0,
       bossRate: 0,
       timeLabel: '10点 12点 15点',
       patterns: [/^HH/i, /^Hqq/i],
@@ -550,7 +715,7 @@ TN-MHB-mb0-01046
     TN: {
       name: 'TN',
       link: 'https://www.hserr9zaq3du.com/home',
-      workerRate: 0.3,
+      workerRate: 0,
       bossRate: 0,
       timeLabel: '7:00-11:30 16-18',
       patterns: [/^TN/i],
@@ -559,11 +724,12 @@ TN-MHB-mb0-01046
 
   const STORAGE_KEY = 'settlement-tool-state-v2';
   const PLATFORM_ORDER = ['XX', 'qq', 'HH', 'TN'];
+  const RATE_OVERRIDE_KEYS = [...PLATFORM_ORDER, 'hive'];
   const COOLDOWN_DAYS = 7;
   const DEFAULT_LABELS = {
     appTitle: '兼职结算核对工具',
     subtitle: '账号对应微信，回传自动算钱，每日数据一眼看清',
-    bossName: '上家',
+    bossName: '渠道',
   };
   const AGENT_SPARE_LABEL = '代理备用';
 
@@ -585,6 +751,7 @@ TN-MHB-mb0-01046
       agents: [],
       labels: clone(DEFAULT_LABELS),
       rateOverrides: { worker: {}, agent: {} },
+      hive: { accounts: [], rates: { worker: 0, agent: 0, boss: 0 } },
       days: {},
     };
   }
@@ -614,13 +781,14 @@ TN-MHB-mb0-01046
           };
         }
 
-        const plain = line.match(/^(\S+)\s+(\S+)/);
+        const plain = line.match(/^(\S+)\s+(\S+)(?:\s+(.+))?$/);
         if (!plain) return null;
         const account = plain[1].trim();
+        const owner = String(plain[3] || '').trim().replace(/^[（(]\s*/, '').replace(/\s*[）)]$/, '');
         return {
           account,
           password: plain[2].trim(),
-          wechat: '',
+          wechat: owner,
           platform: detectPlatform(account),
         };
       })
@@ -669,6 +837,244 @@ TN-MHB-mb0-01046
     return rows;
   }
 
+  function normalizeHiveAccountValue(value) {
+    return String(value || '').trim();
+  }
+
+  function hiveKey(account) {
+    return normalizeHiveAccountValue(account).toLowerCase();
+  }
+
+  function isHiveAccount(value) {
+    return /LSZB1/i.test(String(value || ''));
+  }
+
+  function normalizeHiveAccount(row) {
+    return {
+      account: normalizeHiveAccountValue(row && row.account),
+      ownerType: row && row.ownerType === 'agent' ? 'agent' : 'worker',
+      owner: String(row && row.owner || '').trim(),
+    };
+  }
+
+  function normalizeHiveState(hive) {
+    const source = hive && typeof hive === 'object' ? hive : {};
+    const rates = source.rates && typeof source.rates === 'object' ? source.rates : {};
+    const unique = new Map();
+    (Array.isArray(source.accounts) ? source.accounts : []).map(normalizeHiveAccount).forEach((row) => {
+      if (!row.account) return;
+      unique.set(hiveKey(row.account), row);
+    });
+    return {
+      accounts: [...unique.values()].sort((a, b) => a.account.localeCompare(b.account)),
+      rates: {
+        worker: Number(rates.worker) || 0,
+        agent: Number(rates.agent) || 0,
+        boss: Number(rates.boss) || 0,
+      },
+    };
+  }
+
+  function excelSerialToDate(value) {
+    const serial = Number(value);
+    if (!Number.isFinite(serial)) return '';
+    const date = new Date(Date.UTC(1899, 11, 30));
+    date.setUTCDate(date.getUTCDate() + serial);
+    return date.toISOString().slice(0, 10);
+  }
+
+  function parseHiveRosterRows(rows, options = {}) {
+    const ownerType = options.ownerType === 'agent' ? 'agent' : 'worker';
+    const owner = String(options.owner || '').trim();
+    return (rows || [])
+      .map((row) => {
+        const cells = Array.isArray(row) ? row : [row];
+        const account = normalizeHiveAccountValue(cells.find((cell) => isHiveAccount(cell)) || cells[0]);
+        if (!account || account === '账号' || !isHiveAccount(account)) return null;
+        const inlineOwner = String(cells[1] || cells[2] || '').trim();
+        return {
+          account,
+          ownerType,
+          owner: owner || inlineOwner,
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function parseHiveRosterText(text, options = {}) {
+    const rows = String(text || '')
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => line.split(/\s+/));
+    return parseHiveRosterRows(rows, options);
+  }
+
+  function parseHiveReturnRows(rows) {
+    const map = new Map();
+    (rows || []).forEach((row) => {
+      const cells = Array.isArray(row) ? row : [row];
+      const accountIndex = cells.findIndex((cell) => isHiveAccount(cell));
+      if (accountIndex < 0) return;
+      const account = normalizeHiveAccountValue(cells[accountIndex]);
+      const countCell = cells.slice(accountIndex + 1).find((cell) => cell !== '' && cell !== null && cell !== undefined && Number.isFinite(Number(cell)));
+      const count = Math.max(0, Number(countCell) || 0);
+      const dateCell = cells.find((cell, index) => index !== accountIndex && Number.isFinite(Number(cell)) && Number(cell) > 30000);
+      const date = excelSerialToDate(dateCell);
+      const key = hiveKey(account);
+      const existing = map.get(key) || { account, count: 0, date };
+      existing.count += count;
+      if (!existing.date && date) existing.date = date;
+      map.set(key, existing);
+    });
+    return [...map.values()];
+  }
+
+  function parseHiveReturnText(text) {
+    const rows = String(text || '')
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => line.split(/\s+/));
+    return parseHiveReturnRows(rows);
+  }
+
+  function upsertHiveAccounts(state, rows) {
+    state.hive = normalizeHiveState(state.hive);
+    const map = new Map(state.hive.accounts.map((row) => [hiveKey(row.account), row]));
+    (rows || []).map(normalizeHiveAccount).forEach((row) => {
+      if (!row.account) return;
+      map.set(hiveKey(row.account), row);
+    });
+    state.hive.accounts = [...map.values()].sort((a, b) => a.account.localeCompare(b.account));
+    return state.hive.accounts;
+  }
+
+  function deleteHiveAccount(state, account) {
+    state.hive = normalizeHiveState(state.hive);
+    const before = state.hive.accounts.length;
+    const key = hiveKey(account);
+    state.hive.accounts = state.hive.accounts.filter((row) => hiveKey(row.account) !== key);
+    return { deleted: state.hive.accounts.length !== before };
+  }
+
+  function hiveSettlement(state, date = today()) {
+    const hive = normalizeHiveState(state.hive);
+    const day = (state.days || {})[date] || {};
+    const returns = Array.isArray(day.hiveReturns) ? day.hiveReturns : [];
+    const accountMap = new Map(hive.accounts.map((row) => [hiveKey(row.account), row]));
+    const rows = returns.map((item) => {
+      const count = Number(item.count) || 0;
+      const account = normalizeHiveAccountValue(item.account);
+      const matched = accountMap.get(hiveKey(account));
+      const ownerType = matched ? matched.ownerType : 'worker';
+      const owner = matched && matched.owner ? matched.owner : '未匹配';
+      const baseRate = ownerType === 'agent' ? hive.rates.agent : hive.rates.worker;
+      const rate = rateForOwner({
+        type: ownerType,
+        name: owner,
+        platform: 'hive',
+        platforms: {},
+        rateOverrides: state.rateOverrides,
+        fallbackRate: baseRate,
+      });
+      const payable = money(count * rate);
+      const receivable = money(count * hive.rates.boss);
+      return {
+        task: '蜂箱',
+        account,
+        count,
+        ownerType,
+        owner,
+        rate,
+        payable,
+        receivable,
+        profit: money(receivable - payable),
+        matched: Boolean(matched && matched.owner),
+      };
+    });
+    const unmatched = rows.filter((row) => !row.matched && row.count > 0);
+    return { rows, unmatched };
+  }
+
+  function emptyTaskSummary() {
+    const platforms = {};
+    PLATFORM_ORDER.forEach((platform) => {
+      platforms[platform] = { platform, count: 0, payable: 0, receivable: 0, profit: 0, activeAccounts: 0 };
+    });
+    return { count: 0, payable: 0, receivable: 0, profit: 0, activeAccounts: 0, platforms };
+  }
+
+  function addTaskSummary(target, source) {
+    target.count += Number(source.count) || 0;
+    target.payable = money(target.payable + (Number(source.payable) || 0));
+    target.receivable = money(target.receivable + (Number(source.receivable) || 0));
+    target.profit = money(target.profit + (Number(source.profit) || 0));
+    if (Number(source.count) > 0 || Number(source.activeAccounts) > 0) target.activeAccounts += Number(source.activeAccounts) || 1;
+    if (source.platforms) {
+      Object.entries(source.platforms).forEach(([platform, row]) => {
+        if (!target.platforms[platform]) target.platforms[platform] = { platform, count: 0, payable: 0, receivable: 0, profit: 0, activeAccounts: 0 };
+        addTaskSummary(target.platforms[platform], row);
+      });
+    }
+  }
+
+  function calculateCombinedSettlement({ state, date = today(), douyinSettlement }) {
+    const douyin = douyinSettlement || calculateSettlement({
+      accounts: state.accounts,
+      assignments: state.assignments,
+      date,
+      returns: ((state.days || {})[date] || {}).returns || [],
+      platforms: state.platforms,
+      rateOverrides: state.rateOverrides,
+    });
+    const hive = hiveSettlement(state, date);
+    const groups = new Map();
+
+    function ensure(type, name) {
+      const cleanName = String(name || '').trim() || '未匹配';
+      const key = `${type === 'agent' ? 'agent' : 'worker'}:${cleanName}`;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          type: type === 'agent' ? 'agent' : 'worker',
+          name: cleanName,
+          douyin: emptyTaskSummary(),
+          hive: emptyTaskSummary(),
+          total: emptyTaskSummary(),
+        });
+      }
+      return groups.get(key);
+    }
+
+    (douyin.byAssigneePlatform || []).forEach((row) => {
+      if (!row.count) return;
+      const group = ensure(row.assigneeType, row.wechat);
+      addTaskSummary(group.douyin, row);
+      addTaskSummary(group.total, row);
+    });
+
+    hive.rows.forEach((row) => {
+      if (!row.count || !row.matched) return;
+      const group = ensure(row.ownerType, row.owner);
+      addTaskSummary(group.hive, row);
+      addTaskSummary(group.total, row);
+    });
+
+    const rows = [...groups.values()].sort((a, b) => b.total.count - a.total.count || a.name.localeCompare(b.name, 'zh-Hans-CN'));
+    return {
+      rows,
+      workers: rows.filter((row) => row.type !== 'agent'),
+      agents: rows.filter((row) => row.type === 'agent'),
+      hiveRows: hive.rows,
+      hiveUnmatched: hive.unmatched,
+      total: rows.reduce((sum, row) => {
+        addTaskSummary(sum, row.total);
+        return sum;
+      }, emptyTaskSummary()),
+    };
+  }
+
   function money(value) {
     return Math.round((Number(value) || 0) * 100) / 100;
   }
@@ -707,10 +1113,11 @@ TN-MHB-mb0-01046
 
   function normalizeLabels(labels) {
     const source = labels && typeof labels === 'object' ? labels : {};
+    const bossName = String(source.bossName || DEFAULT_LABELS.bossName).trim() || DEFAULT_LABELS.bossName;
     return {
       appTitle: String(source.appTitle || DEFAULT_LABELS.appTitle).trim() || DEFAULT_LABELS.appTitle,
       subtitle: String(source.subtitle || DEFAULT_LABELS.subtitle).trim() || DEFAULT_LABELS.subtitle,
-      bossName: String(source.bossName || DEFAULT_LABELS.bossName).trim() || DEFAULT_LABELS.bossName,
+      bossName: bossName === '\u4e0a\u5bb6' ? '渠道' : bossName,
     };
   }
 
@@ -739,7 +1146,7 @@ TN-MHB-mb0-01046
         const cleanName = String(name || '').trim();
         if (!cleanName || !rates || typeof rates !== 'object') return;
         normalized[type][cleanName] = {};
-        PLATFORM_ORDER.forEach((platform) => {
+        RATE_OVERRIDE_KEYS.forEach((platform) => {
           if (rates[platform] !== undefined && rates[platform] !== '') {
             normalized[type][cleanName][platform] = Number(rates[platform]) || 0;
           }
@@ -753,7 +1160,7 @@ TN-MHB-mb0-01046
     const ownerType = type === 'agent' ? 'agent' : 'worker';
     const ownerName = String(name || '').trim();
     if (!ownerName) return false;
-    if (!PLATFORM_ORDER.includes(platform)) return false;
+    if (!RATE_OVERRIDE_KEYS.includes(platform)) return false;
     state.rateOverrides = normalizeRateOverrides(state.rateOverrides);
     if (!state.rateOverrides[ownerType][ownerName]) state.rateOverrides[ownerType][ownerName] = {};
     if (rate === '' || rate === null || rate === undefined) {
@@ -772,9 +1179,9 @@ TN-MHB-mb0-01046
     if (ownerName && overrides[ownerType] && overrides[ownerType][ownerName] && overrides[ownerType][ownerName][platform] !== undefined) {
       return Number(overrides[ownerType][ownerName][platform]) || 0;
     }
+    if (fallbackRate !== null && fallbackRate !== undefined && fallbackRate !== '') return Number(fallbackRate) || 0;
     const config = normalizePlatformConfig(platforms);
     const rates = config[platform] || { workerRate: 0 };
-    if (fallbackRate !== null && fallbackRate !== undefined && fallbackRate !== '') return Number(fallbackRate) || 0;
     return Number(rates.workerRate) || 0;
   }
 
@@ -870,7 +1277,7 @@ TN-MHB-mb0-01046
     const name = String(wechat || '').trim();
     if (!name) return { assigned: [], missing: platforms.slice(), text: '' };
     state.assignments = Array.isArray(state.assignments) ? state.assignments : [];
-    const assigned = [];
+    const selected = [];
     const missing = [];
 
     for (const platform of platforms) {
@@ -879,16 +1286,21 @@ TN-MHB-mb0-01046
         missing.push(platform);
         continue;
       }
+      selected.push(candidate);
+    }
+
+    if (missing.length) return { assigned: [], missing, text: '' };
+
+    selected.forEach((candidate) => {
       state.assignments.push(createAssignment({
         account: candidate.account,
         assignee: name,
         assigneeType: 'worker',
         startDate,
       }));
-      assigned.push(candidate);
-    }
+    });
 
-    return { assigned, missing, text: formatAssignmentText(assigned, state.platforms) };
+    return { assigned: selected, missing: [], text: formatAssignmentText(selected, state.platforms) };
   }
 
   function assignAccountsToAgent(state, { agent, rate, startDate = today(), accounts = [] }) {
@@ -1224,11 +1636,84 @@ TN-MHB-mb0-01046
   }
 
   function formatAgentReturnCsv(rows) {
-    const lines = [['代理', '账号', '平台', '单数'].map(csvCell).join(',')];
+    const lines = [['代理名称', '任务', '平台', '账号', '成功数', '失败数', '结算状态'].map(csvCell).join(',')];
     (rows || []).forEach((row) => {
-      lines.push([row.agent, row.account, row.platform, row.count].map(csvCell).join(','));
+      lines.push([
+        row.agent,
+        row.task || '抖音团购',
+        row.platform || detectPlatform(row.account),
+        row.account,
+        row.count,
+        row.failCount || 0,
+        row.status || '待结算',
+      ].map(csvCell).join(','));
     });
     return lines.join('\n');
+  }
+
+  function parseCsvLine(line) {
+    const cells = [];
+    let current = '';
+    let quoted = false;
+    for (let index = 0; index < String(line || '').length; index += 1) {
+      const char = line[index];
+      if (char === '"') {
+        if (quoted && line[index + 1] === '"') {
+          current += '"';
+          index += 1;
+        } else {
+          quoted = !quoted;
+        }
+      } else if (char === ',' && !quoted) {
+        cells.push(current);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    cells.push(current);
+    return cells.map((cell) => cell.trim());
+  }
+
+  function parseAgentReturnCsv(text) {
+    const lines = String(text || '').split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+    if (!lines.length) return { rows: [], errors: ['没有可导入的数据'] };
+    const header = parseCsvLine(lines[0]);
+    const required = ['代理名称', '平台', '账号', '成功数'];
+    const indexMap = {};
+    header.forEach((name, index) => { indexMap[name] = index; });
+    const errors = [];
+    required.forEach((name) => {
+      if (indexMap[name] === undefined) errors.push(`表头缺少${name}`);
+    });
+    if (errors.length) return { rows: [], errors };
+
+    const rows = [];
+    lines.slice(1).forEach((line, lineIndex) => {
+      const rowNo = lineIndex + 2;
+      const cells = parseCsvLine(line);
+      const account = String(cells[indexMap['账号']] || '').trim();
+      const successRaw = cells[indexMap['成功数']];
+      const count = Number(successRaw);
+      if (!account) {
+        errors.push(`第 ${rowNo} 行格式有误，缺少账号`);
+        return;
+      }
+      if (successRaw === undefined || successRaw === '' || !Number.isFinite(count)) {
+        errors.push(`第 ${rowNo} 行格式有误，缺少成功数`);
+        return;
+      }
+      rows.push({
+        agent: String(cells[indexMap['代理名称']] || '').trim(),
+        task: indexMap['任务'] === undefined ? '' : String(cells[indexMap['任务']] || '').trim(),
+        platform: String(cells[indexMap['平台']] || '').trim() || detectPlatform(account),
+        account,
+        count: Math.max(0, count || 0),
+        failCount: indexMap['失败数'] === undefined ? 0 : Math.max(0, Number(cells[indexMap['失败数']]) || 0),
+        status: indexMap['结算状态'] === undefined ? '' : String(cells[indexMap['结算状态']] || '').trim(),
+      });
+    });
+    return { rows, errors };
   }
 
   function addAssigneePlatformSummary(map, row) {
@@ -1617,6 +2102,7 @@ TN-MHB-mb0-01046
       agents: Array.isArray(parsed.agents) ? parsed.agents : [],
       labels: normalizeLabels(parsed.labels),
       rateOverrides: normalizeRateOverrides(parsed.rateOverrides),
+      hive: normalizeHiveState(parsed.hive),
       days: parsed.days && typeof parsed.days === 'object' ? parsed.days : {},
     };
   }
@@ -1648,10 +2134,19 @@ TN-MHB-mb0-01046
     detectPlatform,
     parseAccountRoster,
     parseReturnText,
+    parseHiveRosterRows,
+    parseHiveRosterText,
+    parseHiveReturnRows,
+    parseHiveReturnText,
+    upsertHiveAccounts,
+    deleteHiveAccount,
+    hiveSettlement,
+    calculateCombinedSettlement,
     calculateSettlement,
     agentReturnRows,
     formatAgentReturnText,
     formatAgentReturnCsv,
+    parseAgentReturnCsv,
     availableAccounts,
     accountStatus,
     accountOwnerLabel,
@@ -1700,8 +2195,18 @@ TN-MHB-mb0-01046
       return Array.isArray(day.returns) ? day.returns : [];
     }
 
+    function currentHiveReturns() {
+      const day = state.days[state.selectedDate] || { hiveReturns: [] };
+      return Array.isArray(day.hiveReturns) ? day.hiveReturns : [];
+    }
+
     function setCurrentReturns(returns) {
-      state.days[state.selectedDate] = { returns };
+      state.days[state.selectedDate] = { ...(state.days[state.selectedDate] || {}), returns };
+      T.saveState(state);
+    }
+
+    function setCurrentHiveReturns(hiveReturns) {
+      state.days[state.selectedDate] = { ...(state.days[state.selectedDate] || {}), hiveReturns };
       T.saveState(state);
     }
 
@@ -1713,6 +2218,14 @@ TN-MHB-mb0-01046
         returns: currentReturns(),
         platforms: state.platforms,
         rateOverrides: state.rateOverrides,
+      });
+    }
+
+    function combinedResult() {
+      return T.calculateCombinedSettlement({
+        state,
+        date: state.selectedDate,
+        douyinSettlement: result(),
       });
     }
 
@@ -1728,12 +2241,14 @@ TN-MHB-mb0-01046
       renderAccounts();
       renderOwnerGroups();
       renderAgentAccountDetails();
+      renderHive();
       renderAssignmentPanel();
       renderReturns();
       renderWechat();
       renderAgentAccountDaily();
       renderAgentExport();
       renderCopyText();
+      renderSettlementScreenshot();
       renderPriceSettings();
       renderOwnerRates();
       renderCloudSettings();
@@ -1763,7 +2278,7 @@ TN-MHB-mb0-01046
     }
 
     function renderStats() {
-      const r = result();
+      const r = combinedResult();
       $('stats').innerHTML = [
         ['今日总单', r.total.count + ' 单', ''],
         [bossLabel('应收'), yuan(r.total.receivable), ''],
@@ -1862,14 +2377,13 @@ TN-MHB-mb0-01046
         return `<tr>
           <td><span class="badge">${key}</span></td>
           <td>${item.count}</td>
-          <td>${cfg.workerRate}</td>
           <td>${cfg.bossRate}</td>
           <td>${yuan(item.payable)}</td>
           <td>${yuan(item.receivable)}</td>
           <td class="${item.profit >= 0 ? 'ok' : 'warn'}">${yuan(item.profit)}</td>
         </tr>`;
       });
-      $('platformTable').innerHTML = table(['平台', '单数', '兼职价', bossLabel('价'), '应付', '应收', '利润'], rows, '暂无数据');
+      $('platformTable').innerHTML = table(['平台', '单数', bossLabel('价'), '应付', '应收', '利润'], rows, '暂无数据');
     }
 
     function renderUnmatched() {
@@ -2124,37 +2638,97 @@ TN-MHB-mb0-01046
       $('returnTable').innerHTML = table(['账号', '平台', '微信', '单数', '应付兼职', '状态'], rows, '当天还没有回传数据');
     }
 
-    function renderWechat() {
-      const r = result();
-      const workerRows = r.byAssigneePlatform
-        .filter((row) => row.assigneeType !== 'agent')
-        .filter((row) => row.count > 0 || (row.wechat !== '未备注' && row.wechat !== '未匹配'))
+    function renderHive() {
+      if (!$('hiveAccountTable')) return;
+      state.hive = state.hive || { accounts: [], rates: { worker: 0, agent: 0, boss: 0 } };
+      const keyword = $('hiveAccountSearch').value.trim().toLowerCase();
+      const accountRows = (state.hive.accounts || [])
+        .filter((row) => !keyword || [row.account, row.owner, row.ownerType].some((value) => String(value || '').toLowerCase().includes(keyword)))
         .map((row) => `<tr>
-        <td>${row.wechat}</td>
-        <td>${platformCell(row, 'XX')}</td>
-        <td>${platformCell(row, 'qq')}</td>
-        <td>${platformCell(row, 'HH')}</td>
-        <td>${platformCell(row, 'TN')}</td>
-        <td>${row.count}</td>
-        <td>${yuan(row.payable)}</td>
-      </tr>`);
-      $('wechatTable').innerHTML = table(['微信', 'XX', 'qq', 'HH', 'TN', '合计单数', '应付兼职'], workerRows, '当天还没有兼职结算数据');
+          <td>${escapeHtml(row.account)}</td>
+          <td>${row.ownerType === 'agent' ? '代理' : '兼职'}</td>
+          <td>${escapeHtml(row.owner || '未填写')}</td>
+          <td><button class="danger" data-delete-hive-account="${escapeHtml(row.account)}">删除</button></td>
+        </tr>`);
+      $('hiveAccountTable').innerHTML = table(['蜂箱账号', '类型', '归属', '操作'], accountRows, '还没有蜂箱账号目录');
 
-      const agentRows = r.byAssigneePlatform
-        .filter((row) => row.assigneeType === 'agent')
-        .filter((row) => row.count > 0 || row.activeAccounts > 0)
-        .map((row) => `<tr>
-        <td>${row.wechat}</td>
-        <td>${platformCell(row, 'XX')}</td>
-        <td>${platformCell(row, 'qq')}</td>
-        <td>${platformCell(row, 'HH')}</td>
-        <td>${platformCell(row, 'TN')}</td>
+      const combined = combinedResult();
+      const unmatchedRows = combined.hiveUnmatched.map((row) => `<tr>
+        <td>${escapeHtml(row.account)}</td>
         <td>${row.count}</td>
-        <td>${yuan(row.payable)}</td>
-        <td>${yuan(row.receivable)}</td>
-        <td>${yuan(row.profit)}</td>
+        <td><button class="secondary" data-fill-hive-account="${escapeHtml(row.account)}">填到目录输入框</button></td>
       </tr>`);
-      $('agentTable').innerHTML = table(['代理', 'XX', 'qq', 'HH', 'TN', '合计单数', '应付代理', bossLabel('应收'), '利润'], agentRows, '当天还没有代理结算数据');
+      $('hiveUnmatchedBox').innerHTML = unmatchedRows.length
+        ? `<div class="notice">这些蜂箱账号有回传单数，但目录里还没有归属。确认是谁的以后，选择归属类型和名称，再点“填到目录输入框”导入即可落实。</div><div class="table-wrap"><table>${table(['蜂箱账号', '成功数', '操作'], unmatchedRows, '暂无')}</table></div>`
+        : '<div class="empty">没有蜂箱未匹配账号</div>';
+
+      const hiveRows = combined.hiveRows
+        .filter((row) => row.count > 0 || currentHiveReturns().some((item) => item.account === row.account))
+        .map((row) => `<tr>
+          <td>${escapeHtml(row.account)}</td>
+          <td>${row.ownerType === 'agent' ? '代理' : '兼职'}</td>
+          <td>${escapeHtml(row.owner)}</td>
+          <td>${row.count}</td>
+          <td>${yuan(row.payable)}</td>
+          <td>${row.matched ? '<span class="ok">已匹配</span>' : '<span class="warn">未匹配</span>'}</td>
+        </tr>`);
+      $('hiveReturnTable').innerHTML = table(['蜂箱账号', '类型', '归属', '成功数', '应付', '状态'], hiveRows, '当天还没有蜂箱回传');
+    }
+
+    function renderWechat() {
+      const r = combinedResult();
+      const workerRows = r.workers
+        .filter((row) => row.total.count > 0)
+        .map((row) => `<tr>
+        <td>${escapeHtml(row.name)}</td>
+        <td>${platformCell(row.douyin, 'XX')}</td>
+        <td>${platformCell(row.douyin, 'qq')}</td>
+        <td>${platformCell(row.douyin, 'HH')}</td>
+        <td>${platformCell(row.douyin, 'TN')}</td>
+        <td>${taskCell(row.hive)}</td>
+        <td>${row.total.count}</td>
+        <td>${yuan(row.total.payable)}</td>
+      </tr>`);
+      $('wechatTable').innerHTML = table(['微信', 'XX', 'qq', 'HH', 'TN', '蜂箱', '合计单数', '应付兼职'], workerRows, '当天还没有兼职结算数据');
+
+      const agentRows = r.agents
+        .filter((row) => row.total.count > 0)
+        .map((row) => `<tr>
+        <td>${escapeHtml(row.name)}</td>
+        <td>${platformCell(row.douyin, 'XX')}</td>
+        <td>${platformCell(row.douyin, 'qq')}</td>
+        <td>${platformCell(row.douyin, 'HH')}</td>
+        <td>${platformCell(row.douyin, 'TN')}</td>
+        <td>${taskCell(row.hive)}</td>
+        <td>${row.total.count}</td>
+        <td>${yuan(row.total.payable)}</td>
+        <td>${yuan(row.total.receivable)}</td>
+        <td>${yuan(row.total.profit)}</td>
+      </tr>`);
+      $('agentTable').innerHTML = table(['代理', 'XX', 'qq', 'HH', 'TN', '蜂箱', '合计单数', '应付代理', bossLabel('应收'), '利润'], agentRows, '当天还没有代理结算数据');
+    }
+
+    function screenshotTaskCell(row) {
+      const pieces = ['XX', 'qq', 'HH', 'TN']
+        .map((key) => {
+          const item = row.douyin.platforms && row.douyin.platforms[key] ? row.douyin.platforms[key] : { count: 0, payable: 0 };
+          return `<span class="screenshot-task">${key} ${item.count || 0}单<br><span class="small">${yuan(item.payable || 0)}</span></span>`;
+        });
+      const hive = row.hive || { count: 0, payable: 0 };
+      pieces.push(`<span class="screenshot-task">蜂箱 ${hive.count || 0}单<br><span class="small">${yuan(hive.payable || 0)}</span></span>`);
+      return pieces.join('');
+    }
+
+    function renderSettlementScreenshot() {
+      if (!$('settlementScreenshotTable')) return;
+      const rows = combinedResult().workers
+        .filter((row) => row.total.count > 0)
+        .map((row) => `<tr>
+          <td>${escapeHtml(row.name)}</td>
+          <td>${screenshotTaskCell(row)}</td>
+          <td class="screenshot-total">${row.total.count}单<br>${yuan(row.total.payable)}</td>
+        </tr>`);
+      $('settlementScreenshotTable').innerHTML = table(['微信', '任务明细', '合计应结'], rows, '当天还没有兼职结算数据');
     }
 
     function renderAgentAccountDaily() {
@@ -2174,12 +2748,29 @@ TN-MHB-mb0-01046
     }
 
     function currentAgentNames() {
-      const names = [...new Set(T.agentReturnRows(result()).map((row) => row.agent))];
+      const hiveNames = combinedResult().hiveRows
+        .filter((row) => row.ownerType === 'agent' && row.count > 0 && row.matched)
+        .map((row) => row.owner);
+      const names = [...new Set(T.agentReturnRows(result()).map((row) => row.agent).concat(hiveNames))];
       return names.sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'));
     }
 
     function selectedAgentReturnRows() {
-      return T.agentReturnRows(result(), $('agentExportSelect').value);
+      const agent = $('agentExportSelect').value;
+      const douyinRows = T.agentReturnRows(result(), agent).map((row) => ({ ...row, task: '抖音团购' }));
+      const hiveRows = combinedResult().hiveRows
+        .filter((row) => row.ownerType === 'agent' && row.count > 0 && row.matched)
+        .filter((row) => !agent || row.owner === agent)
+        .map((row) => ({ agent: row.owner, account: row.account, platform: '蜂箱', count: row.count, task: '蜂箱' }));
+      return douyinRows.concat(hiveRows);
+    }
+
+    function formatCombinedAgentReturnText(rows) {
+      return (rows || []).map((row) => `${row.task || row.platform} ${row.account} ${row.count}`).join('\n');
+    }
+
+    function formatCombinedAgentReturnCsv(rows) {
+      return T.formatAgentReturnCsv(rows || []);
     }
 
     function renderAgentExport() {
@@ -2188,12 +2779,17 @@ TN-MHB-mb0-01046
       $('agentExportSelect').innerHTML = names.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
       if (current && names.includes(current)) $('agentExportSelect').value = current;
       const rows = selectedAgentReturnRows();
-      $('agentExportPreview').textContent = rows.length ? T.formatAgentReturnText(rows) : '当天还没有代理账号单数';
+      $('agentExportPreview').textContent = rows.length ? formatCombinedAgentReturnText(rows) : '当天还没有代理账号单数';
     }
 
     function platformCell(row, platform) {
       const item = row.platforms && row.platforms[platform] ? row.platforms[platform] : { count: 0, payable: 0 };
       if (!item.count) return '<span class="muted">0单<br>￥0.00</span>';
+      return `<strong>${item.count}单</strong><br><span class="small">${yuan(item.payable)}</span>`;
+    }
+
+    function taskCell(item) {
+      if (!item || !item.count) return '<span class="muted">0单<br>￥0.00</span>';
       return `<strong>${item.count}单</strong><br><span class="small">${yuan(item.payable)}</span>`;
     }
 
@@ -2203,14 +2799,19 @@ TN-MHB-mb0-01046
       return `${platform}${item.count}单/${yuan(item.payable)}`;
     }
 
+    function combinedCopyLine(row) {
+      const parts = [];
+      const douyinParts = ['XX', 'qq', 'HH', 'TN'].map((key) => platformCopyPart(row.douyin, key)).filter(Boolean);
+      if (douyinParts.length) parts.push(`抖音${douyinParts.join('，')}`);
+      if (row.hive && row.hive.count) parts.push(`蜂箱${row.hive.count}单/${yuan(row.hive.payable)}`);
+      return `${row.name}：${parts.join('，')}，合计${row.total.count}单，应结 ${yuan(row.total.payable)}`;
+    }
+
     function renderCopyText() {
-      const r = result();
-      const workerLines = r.byAssigneePlatform
-        .filter((row) => row.count > 0 && row.assigneeType !== 'agent')
-        .map((row) => {
-          const parts = ['XX', 'qq', 'HH', 'TN'].map((key) => platformCopyPart(row, key)).filter(Boolean).join('，');
-          return `${row.wechat}：${parts}，合计${row.count}单，应结 ${yuan(row.payable)}`;
-        });
+      const r = combinedResult();
+      const workerLines = r.workers
+        .filter((row) => row.total.count > 0)
+        .map(combinedCopyLine);
       $('workerCopyText').textContent = [
         `${state.selectedDate} 兼职结算`,
         workerLines.length ? workerLines.join('\n') : '暂无兼职结算',
@@ -2218,17 +2819,20 @@ TN-MHB-mb0-01046
     }
 
     function renderPriceSettings() {
+      state.hive = state.hive || { accounts: [], rates: { worker: 0, agent: 0, boss: 0 } };
       $('priceSettings').innerHTML = Object.keys(state.platforms).map((key) => {
         const cfg = state.platforms[key];
         return `<div class="card">
           <h3><span class="badge">${key}</span></h3>
           <div class="platform-price">
-            <div><label>兼职单价</label><input data-worker-rate="${key}" type="number" step="0.01" value="${cfg.workerRate}"></div>
-            <div><label><span class="bossRateLabel">${escapeHtml(bossLabel('单价'))}</span></label><input data-boss-rate="${key}" type="number" step="0.01" value="${cfg.bossRate}"></div>
+            <div><label><span class="bossRateLabel">${escapeHtml(bossLabel('单价'))}</span></label><input data-boss-rate="${key}" type="number" step="0.01" value="${cfg.bossRate || ''}" placeholder="留空按 0 计算"></div>
           </div>
           <div style="margin-top:8px"><label>链接</label><input data-link="${key}" value="${cfg.link || ''}"></div>
         </div>`;
       }).join('');
+      $('hiveWorkerRateInput').value = state.hive.rates.worker || '';
+      $('hiveAgentRateInput').value = state.hive.rates.agent || '';
+      $('hiveBossRateInput').value = state.hive.rates.boss || '';
     }
 
     function renderOwnerRates() {
@@ -2236,12 +2840,12 @@ TN-MHB-mb0-01046
       const rows = [];
       ['worker', 'agent'].forEach((type) => {
         Object.entries(overrides[type] || {}).forEach(([name, rates]) => {
-          T.PLATFORM_ORDER.forEach((platform) => {
+          T.PLATFORM_ORDER.concat(['hive']).forEach((platform) => {
             if (rates[platform] === undefined) return;
             rows.push(`<tr>
               <td>${type === 'agent' ? '代理' : '兼职'}</td>
               <td>${escapeHtml(name)}</td>
-              <td><span class="badge">${platform}</span></td>
+              <td><span class="badge">${platform === 'hive' ? '蜂箱' : platform}</span></td>
               <td>${rates[platform]}</td>
             </tr>`);
           });
@@ -2335,8 +2939,8 @@ TN-MHB-mb0-01046
       $('editAccountPanel').style.display = 'none';
     }
 
-    function deleteAccountFromUi(account) {
-      if (!confirm(`确定删除测试号 ${account}？只有没有回传订单的账号才会删除；有订单会自动拦截。`)) return;
+    async function deleteAccountFromUi(account) {
+      if (!await confirmDialog(`确定删除测试号 ${account}？\n只有没有回传订单的账号才会删除；有订单会自动拦截。`)) return;
       const result = T.deleteAccountSafely(state, account);
       if (!result.deleted) return toast(result.reason || '删除失败');
       T.saveState(state);
@@ -2345,8 +2949,8 @@ TN-MHB-mb0-01046
       toast(`已删除测试号 ${account}`);
     }
 
-    function recycleAgentAccountFromUi(account) {
-      if (!confirm(`确定把 ${account} 从当前代理回收到代理备用仓库？`)) return;
+    async function recycleAgentAccountFromUi(account) {
+      if (!await confirmDialog(`确定把 ${account} 从当前代理回收到代理备用仓库？`)) return;
       const result = T.recycleAgentAccount(state, account);
       if (!result.recycled) return toast(result.reason || '回收失败');
       T.saveState(state);
@@ -2380,6 +2984,29 @@ TN-MHB-mb0-01046
         })
         .filter(Boolean)
         .join('\n');
+    }
+
+    async function spreadsheetRows(file) {
+      const name = file.name.toLowerCase();
+      if (name.endsWith('.csv') || name.endsWith('.txt')) {
+        const text = await file.text();
+        return text.split(/\r?\n/).map((line) => line.split(/\t|,/).map((cell) => cell.trim()));
+      }
+      if (!window.XLSX) {
+        throw new Error('Excel解析库没有加载成功，可以把表格另存为CSV，或直接复制表格内容粘贴进来。');
+      }
+      const buffer = await file.arrayBuffer();
+      const workbook = window.XLSX.read(buffer, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      return window.XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true });
+    }
+
+    function hiveRosterRowsToText(rows) {
+      return T.parseHiveRosterRows(rows).map((row) => row.account).join('\n');
+    }
+
+    function hiveReturnRowsToText(rows) {
+      return T.parseHiveReturnRows(rows).map((row) => `${row.account} ${row.count}`).join('\n');
     }
 
     async function handleReturnFile() {
@@ -2464,7 +3091,33 @@ TN-MHB-mb0-01046
     }
 
     function toast(message) {
-      alert(message);
+      const box = $('toastBox');
+      box.textContent = message;
+      box.style.display = 'block';
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => {
+        box.style.display = 'none';
+      }, 2400);
+    }
+
+    function confirmDialog(message, okText = '确认') {
+      return new Promise((resolve) => {
+        const mask = $('confirmMask');
+        const msg = $('confirmMessage');
+        const cancel = $('confirmCancelBtn');
+        const ok = $('confirmOkBtn');
+        const cleanup = (value) => {
+          mask.style.display = 'none';
+          cancel.onclick = null;
+          ok.onclick = null;
+          resolve(value);
+        };
+        msg.textContent = message;
+        ok.textContent = okText;
+        mask.style.display = 'flex';
+        cancel.onclick = () => cleanup(false);
+        ok.onclick = () => cleanup(true);
+      });
     }
 
     function showInlineStatus(id, message, type = 'notice') {
@@ -2508,7 +3161,9 @@ TN-MHB-mb0-01046
 
     $('selectedDate').addEventListener('change', (event) => {
       state.selectedDate = event.target.value;
-      if (!state.days[state.selectedDate]) state.days[state.selectedDate] = { returns: [] };
+      if (!state.days[state.selectedDate]) state.days[state.selectedDate] = { returns: [], hiveReturns: [] };
+      if (!state.days[state.selectedDate].returns) state.days[state.selectedDate].returns = [];
+      if (!state.days[state.selectedDate].hiveReturns) state.days[state.selectedDate].hiveReturns = [];
       T.saveState(state);
       render();
     });
@@ -2540,6 +3195,7 @@ TN-MHB-mb0-01046
     $('workerGroupSearch').addEventListener('input', renderOwnerGroups);
     $('agentGroupSearch').addEventListener('input', renderOwnerGroups);
     $('assignmentSearch').addEventListener('input', renderAssignmentPanel);
+    $('hiveAccountSearch').addEventListener('input', renderHive);
 
     function handleCopyFromTable(event) {
       const value = event.target.dataset.copyValue;
@@ -2557,6 +3213,87 @@ TN-MHB-mb0-01046
     $('workerGroupTable').addEventListener('click', handleCopyFromTable);
     $('agentAccountGroups').addEventListener('click', handleCopyFromTable);
     $('agentSpareTable').addEventListener('click', handleCopyFromTable);
+
+    $('loadHiveRosterFileBtn').addEventListener('click', async () => {
+      const file = $('hiveRosterFileInput').files && $('hiveRosterFileInput').files[0];
+      if (!file) return toast('请先选择蜂箱账号表格');
+      try {
+        const text = hiveRosterRowsToText(await spreadsheetRows(file));
+        if (!text) return toast('没有识别到蜂箱账号');
+        $('hiveRosterText').value = text;
+        toast('已读取蜂箱账号，请确认归属后导入');
+      } catch (error) {
+        toast(error.message || error);
+      }
+    });
+
+    $('importHiveRosterBtn').addEventListener('click', () => {
+      const owner = $('hiveOwnerInput').value.trim();
+      if (!owner) return toast('请先填写蜂箱账号归属名称');
+      const rows = T.parseHiveRosterText($('hiveRosterText').value, {
+        ownerType: $('hiveOwnerTypeInput').value,
+        owner,
+      });
+      if (!rows.length) return toast('没有识别到蜂箱账号');
+      T.upsertHiveAccounts(state, rows);
+      T.saveState(state);
+      render();
+      toast(`已导入/更新 ${rows.length} 个蜂箱账号`);
+    });
+
+    $('clearHiveRosterTextBtn').addEventListener('click', () => {
+      $('hiveRosterText').value = '';
+    });
+
+    $('loadHiveReturnFileBtn').addEventListener('click', async () => {
+      const file = $('hiveReturnFileInput').files && $('hiveReturnFileInput').files[0];
+      if (!file) return toast('请先选择蜂箱回传表格');
+      try {
+        const text = hiveReturnRowsToText(await spreadsheetRows(file));
+        if (!text) return toast('没有识别到蜂箱回传数据');
+        $('hiveReturnText').value = text;
+        toast('已读取蜂箱回传，请确认后保存');
+      } catch (error) {
+        toast(error.message || error);
+      }
+    });
+
+    $('parseHiveReturnBtn').addEventListener('click', () => {
+      const rows = T.parseHiveReturnText($('hiveReturnText').value);
+      if (!rows.length) return toast('没有识别到蜂箱回传数据');
+      const map = new Map(currentHiveReturns().map((row) => [row.account.toLowerCase(), row]));
+      rows.forEach((row) => map.set(row.account.toLowerCase(), row));
+      setCurrentHiveReturns([...map.values()]);
+      render();
+      toast(`已保存 ${rows.length} 条蜂箱数据到 ${state.selectedDate}`);
+    });
+
+    $('clearHiveReturnTextBtn').addEventListener('click', () => {
+      $('hiveReturnText').value = '';
+    });
+
+    $('clearHiveReturnBtn').addEventListener('click', async () => {
+      if (!await confirmDialog(`确定清空 ${state.selectedDate} 的蜂箱回传数据？`)) return;
+      setCurrentHiveReturns([]);
+      render();
+    });
+
+    $('hiveAccountTable').addEventListener('click', async (event) => {
+      const account = event.target.dataset.deleteHiveAccount;
+      if (!account) return;
+      if (!await confirmDialog(`确定删除蜂箱账号 ${account}？\n只删除账号目录，不会删除已经导入的回传数据。`)) return;
+      T.deleteHiveAccount(state, account);
+      T.saveState(state);
+      render();
+      toast('蜂箱账号已删除');
+    });
+
+    $('hiveUnmatchedBox').addEventListener('click', (event) => {
+      const account = event.target.dataset.fillHiveAccount;
+      if (!account) return;
+      $('hiveRosterText').value = account;
+      toast('已填入目录输入框，选择归属后点导入蜂箱账号');
+    });
 
     $('closeAccountEditBtn').addEventListener('click', closeAccountEditor);
     $('saveAccountEditBtn').addEventListener('click', () => {
@@ -2588,20 +3325,21 @@ TN-MHB-mb0-01046
       toast(changed ? `已调整 ${changed} 条归属` : '没有找到需要调整的微信名');
     });
 
-    $('assignWorkerBtn').addEventListener('click', () => {
+    $('assignWorkerBtn').addEventListener('click', async () => {
       const wechat = $('assignWechatInput').value.trim();
       if (!wechat) return toast('请先输入兼职微信号');
       const res = T.assignAccountsToWorker(state, {
         wechat,
         startDate: $('assignStartDate').value || state.selectedDate,
       });
+      if (!res.assigned.length) {
+        await confirmDialog(`库存不足，缺少：${res.missing.join('、')}\n\n发号规则是四个平台各 1 个，缺任意平台时不会发出残缺组合。`, '知道了');
+        return;
+      }
       T.saveState(state);
       $('assignmentText').value = res.text;
       render();
-      const message = res.missing.length
-        ? `已分配 ${res.assigned.length} 个账号，缺少平台：${res.missing.join('、')}`
-        : '四个平台账号已分配';
-      toast(message);
+      toast('四个平台账号已分配');
     });
 
     $('copyAssignmentBtn').addEventListener('click', () => {
@@ -2625,7 +3363,7 @@ TN-MHB-mb0-01046
       toast(`已归属到代理 ${res.assigned.length} 个账号${res.skipped.length ? `，跳过 ${res.skipped.length} 个不可用账号` : ''}`);
     });
 
-    $('assignmentsTable').addEventListener('click', (event) => {
+    $('assignmentsTable').addEventListener('click', async (event) => {
       const edit = event.target.dataset.editAccount;
       if (edit) return openAccountEditor(edit);
       const del = event.target.dataset.deleteAccount;
@@ -2633,7 +3371,7 @@ TN-MHB-mb0-01046
       const account = event.target.dataset.release;
       const revoke = event.target.dataset.revoke;
       if (revoke) {
-        if (!confirm(`确定撤销账号 ${revoke} 的当前分配？适合处理按错分给代理/兼职的情况，撤销后账号会立刻回到原本可用状态。`)) return;
+        if (!await confirmDialog(`确定撤销账号 ${revoke} 的当前分配？\n适合处理按错分给代理/兼职的情况，撤销后账号会立刻回到原本可用状态。`)) return;
         const revoked = T.revokeActiveAssignment(state, revoke);
         if (!revoked) return toast('这个账号当前没有使用中的分配记录');
         T.saveState(state);
@@ -2641,7 +3379,7 @@ TN-MHB-mb0-01046
         return toast(`已撤销 ${revoke} 的当前分配`);
       }
       if (!account) return;
-      if (!confirm(`确定退号回收账号 ${account}？没有订单会立即释放；已有订单记录会进入 7 天隔离。`)) return;
+      if (!await confirmDialog(`确定退号回收账号 ${account}？\n没有订单会立即释放；已有订单记录会进入 7 天隔离。`)) return;
       const released = T.releaseAssignment(state, account, state.selectedDate);
       if (!released) return toast('这个账号当前没有使用中的分配记录');
       T.saveState(state);
@@ -2675,33 +3413,27 @@ TN-MHB-mb0-01046
       toast('已清空输入框，已保存数据不受影响');
     });
 
-    $('clearReturnBtn').addEventListener('click', () => {
-      if (!confirm(`确定清空 ${state.selectedDate} 的回传数据？`)) return;
+    $('clearReturnBtn').addEventListener('click', async () => {
+      if (!await confirmDialog(`确定清空 ${state.selectedDate} 的回传数据？`)) return;
       setCurrentReturns([]);
       render();
     });
 
-    $('copyWorkerBtn').addEventListener('click', () => copyText(result().byAssigneePlatform
-      .filter((row) => row.count > 0 && row.assigneeType !== 'agent')
-      .map((row) => {
-        const parts = ['XX', 'qq', 'HH', 'TN'].map((key) => platformCopyPart(row, key)).filter(Boolean).join('，');
-        return `${row.wechat}：${parts}，合计${row.count}单，应结 ${yuan(row.payable)}`;
-      })
+    $('copyWorkerBtn').addEventListener('click', () => copyText(combinedResult().workers
+      .filter((row) => row.total.count > 0)
+      .map(combinedCopyLine)
       .join('\n') || '暂无兼职结算'));
 
-    $('copyAgentBtn').addEventListener('click', () => copyText(result().byAssigneePlatform
-      .filter((row) => row.count > 0 && row.assigneeType === 'agent')
-      .map((row) => {
-        const parts = ['XX', 'qq', 'HH', 'TN'].map((key) => platformCopyPart(row, key)).filter(Boolean).join('，');
-        return `${row.wechat}：${parts}，合计${row.count}单，应结 ${yuan(row.payable)}，${bossLabel('应收')} ${yuan(row.receivable)}`;
-      })
+    $('copyAgentBtn').addEventListener('click', () => copyText(combinedResult().agents
+      .filter((row) => row.total.count > 0)
+      .map(combinedCopyLine)
       .join('\n') || '暂无代理结算'));
 
     $('agentExportSelect').addEventListener('change', renderAgentExport);
 
     $('copyAgentReturnsBtn').addEventListener('click', () => {
       const rows = selectedAgentReturnRows();
-      copyText(rows.length ? T.formatAgentReturnText(rows) : '暂无代理账号单数');
+      copyText(rows.length ? formatCombinedAgentReturnText(rows) : '暂无代理账号单数');
     });
 
     $('exportAgentReturnsBtn').addEventListener('click', () => {
@@ -2709,7 +3441,7 @@ TN-MHB-mb0-01046
       if (!rows.length) return toast('暂无代理账号单数可导出');
       const agent = $('agentExportSelect').value || '代理';
       const filename = `${state.selectedDate}-${agent}-账号单数.csv`;
-      downloadTextFile(filename, T.formatAgentReturnCsv(rows));
+      downloadTextFile(filename, formatCombinedAgentReturnCsv(rows));
       toast('代理表格已导出');
     });
 
@@ -2726,10 +3458,15 @@ TN-MHB-mb0-01046
 
     $('savePricesBtn').addEventListener('click', () => {
       Object.keys(state.platforms).forEach((key) => {
-        state.platforms[key].workerRate = Number(document.querySelector(`[data-worker-rate="${key}"]`).value) || 0;
         state.platforms[key].bossRate = Number(document.querySelector(`[data-boss-rate="${key}"]`).value) || 0;
         state.platforms[key].link = document.querySelector(`[data-link="${key}"]`).value.trim();
       });
+      state.hive = state.hive || { accounts: [], rates: { worker: 0, agent: 0, boss: 0 } };
+      state.hive.rates = {
+        worker: Number($('hiveWorkerRateInput').value) || 0,
+        agent: Number($('hiveAgentRateInput').value) || 0,
+        boss: Number($('hiveBossRateInput').value) || 0,
+      };
       T.saveState(state);
       render();
       toast('价格已保存');
@@ -2761,9 +3498,10 @@ TN-MHB-mb0-01046
       toast('单人价格已清除');
     });
 
-    $('resetPricesBtn').addEventListener('click', () => {
-      if (!confirm('确定恢复默认价格？')) return;
+    $('resetPricesBtn').addEventListener('click', async () => {
+      if (!await confirmDialog('确定恢复默认价格？')) return;
       state.platforms = T.restoreState({ platforms: T.DEFAULT_PLATFORMS }).platforms;
+      state.hive = { ...(state.hive || {}), accounts: (state.hive && state.hive.accounts) || [], rates: { worker: 0, agent: 0, boss: 0 } };
       T.saveState(state);
       render();
     });
@@ -2787,7 +3525,18 @@ TN-MHB-mb0-01046
 
     $('scanStorageBtn').addEventListener('click', renderStorageScan);
 
-    $('storageScanBox').addEventListener('click', (event) => {
+    $('clearToolDataBtn').addEventListener('click', async () => {
+      const ok = await confirmDialog('确定清空本工具数据？\n这会删除当前浏览器里的账号、分配、回传和价格设置。\n清空前请先导出备份，避免白忙一场。', '确认清空');
+      if (!ok) return;
+      localStorage.removeItem(T.STORAGE_KEY);
+      localStorage.removeItem('settlement-tool-state-v1');
+      state = T.createDefaultState();
+      if (!state.days[state.selectedDate]) state.days[state.selectedDate] = { returns: [] };
+      render();
+      toast('本工具数据已清空，可以重新编辑');
+    });
+
+    $('storageScanBox').addEventListener('click', async (event) => {
       const index = event.target.dataset.restoreStorage;
       const copyIndex = event.target.dataset.copyStorage;
       if (copyIndex !== undefined) {
@@ -2801,7 +3550,7 @@ TN-MHB-mb0-01046
       const rows = window.__storageScanRows || [];
       const row = rows[Number(index)];
       if (!row) return toast('这条数据已经失效，请重新扫描');
-      if (!confirm(`确定恢复 ${row.key}？当前页面数据会被覆盖。恢复前建议先导出备份。`)) return;
+      if (!await confirmDialog(`确定恢复 ${row.key}？\n当前页面数据会被覆盖，恢复前建议先导出备份。`)) return;
       try {
         state = T.restoreState(row.raw);
         T.saveState(state);
@@ -2830,7 +3579,7 @@ TN-MHB-mb0-01046
     });
 
     $('downloadCloudBtn').addEventListener('click', async () => {
-      if (!confirm('从云端同步会覆盖当前设备数据。继续前建议先导出备份，确定继续？')) return;
+      if (!await confirmDialog('从云端同步会覆盖当前设备数据。\n继续前建议先导出备份，确定继续？')) return;
       try {
         await downloadCloudBackup();
       } catch (error) {
@@ -2838,7 +3587,17 @@ TN-MHB-mb0-01046
       }
     });
 
-    if (!state.days[state.selectedDate]) state.days[state.selectedDate] = { returns: [] };
+    $('backToTopBtn').addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    window.addEventListener('scroll', () => {
+      $('backToTopBtn').style.display = window.scrollY > 360 ? 'block' : 'none';
+    }, { passive: true });
+
+    if (!state.days[state.selectedDate]) state.days[state.selectedDate] = { returns: [], hiveReturns: [] };
+    if (!state.days[state.selectedDate].returns) state.days[state.selectedDate].returns = [];
+    if (!state.days[state.selectedDate].hiveReturns) state.days[state.selectedDate].hiveReturns = [];
     render();
   </script>
 </body>
