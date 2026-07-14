@@ -43,8 +43,11 @@
   };
 
   const STORAGE_KEY = 'settlement-tool-state-v2';
+  const UI_STATE_KEY = 'settlement-tool-ui-v1';
   const SCHEMA_VERSION = 3;
   const PLATFORM_ORDER = ['XX', 'qq', 'HH', 'TN', 'qunar'];
+  const UI_VIEW_IDS = ['overview', 'accounts', 'assign', 'hive', 'daily', 'settings'];
+  const UI_DRAFT_FIELDS = ['rosterText', 'returnText', 'agentImportText', 'hiveRosterText', 'hiveReturnText'];
   const ALL_SETTLEMENT_PLATFORMS = [...PLATFORM_ORDER, 'hive'];
   const RATE_OVERRIDE_KEYS = [...PLATFORM_ORDER, 'hive'];
   const COOLDOWN_DAYS = 7;
@@ -1893,6 +1896,36 @@
     }
   }
 
+  function normalizeUiState(value) {
+    const source = value && typeof value === 'object' ? value : {};
+    const activeView = UI_VIEW_IDS.includes(source.activeView) ? source.activeView : 'overview';
+    const drafts = {};
+    const sourceDrafts = source.drafts && typeof source.drafts === 'object' ? source.drafts : {};
+    UI_DRAFT_FIELDS.forEach((field) => {
+      if (sourceDrafts[field] === undefined || sourceDrafts[field] === null) return;
+      drafts[field] = String(sourceDrafts[field]).slice(0, 200000);
+    });
+    return { activeView, drafts };
+  }
+
+  function loadUiState(storage = root.localStorage) {
+    if (!storage || typeof storage.getItem !== 'function') return normalizeUiState();
+    try {
+      const raw = storage.getItem(UI_STATE_KEY);
+      return normalizeUiState(raw ? JSON.parse(raw) : null);
+    } catch (error) {
+      return normalizeUiState();
+    }
+  }
+
+  function saveUiState(uiState, storage = root.localStorage) {
+    const normalized = normalizeUiState(uiState);
+    if (storage && typeof storage.setItem === 'function') {
+      storage.setItem(UI_STATE_KEY, JSON.stringify(normalized));
+    }
+    return normalized;
+  }
+
   const api = {
     DEFAULT_PLATFORMS,
     DEFAULT_LABELS,
@@ -1900,6 +1933,7 @@
     ALL_SETTLEMENT_PLATFORMS,
     COOLDOWN_DAYS,
     STORAGE_KEY,
+    UI_STATE_KEY,
     AGENT_SPARE_LABEL,
     DEFAULT_ASSIGNMENT_TEXT_TEMPLATE,
     TEMPLATE_VARIABLES,
@@ -1965,6 +1999,8 @@
     restoreState,
     saveState,
     loadState,
+    loadUiState,
+    saveUiState,
     money,
   };
 
